@@ -1,0 +1,126 @@
+# Справочник правил движка. Источник каждой law-нормы — Трудовой кодекс РФ,
+# без сторонних источников (КоАП, подзаконные акты и т.д.). Ссылки указывают на
+# базовый документ ТК РФ на КонсультантПлюс (cons_doc_LAW_34683); точная
+# статья — в поле title, т.к. постатейные якоря страницы не проверялись и не
+# зафиксированы во внешних источниках, доступных при составлении справочника.
+#
+# type: law — прямая норма ТК РФ; calculation — производный расчёт из нормы
+# ТК РФ; company — внутреннее правило компании, не закон (norm.url — служебная
+# внутренняя ссылка, не публичный ресурс).
+
+- id: tk.115.balance
+  type: law
+  check: sufficient_balance
+  severity: block
+  norm:
+    title: "ст. 115, 124 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Остаток дней позволяет оформить отпуск: запрошено {requested} из {balance}"
+    fail: "Недостаточно остатка дней отпуска: доступно {balance}, запрошено {requested}"
+
+- id: tk.125.min-part-14
+  type: law
+  check: min_part_14_days
+  severity: warn
+  norm:
+    title: "ст. 125 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Требование о части отпуска не менее 14 календарных дней выполнено"
+    fail: "Эта часть отпуска короче 14 календарных дней ({days}); хотя бы одна часть отпуска за год должна быть не менее 14 дней"
+
+- id: tk.123.notice
+  type: law
+  check: notice_period_14_days
+  severity: block
+  norm:
+    title: "ст. 123 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Срок извещения соблюдён — уведомление до {notify_by}"
+    fail: "До начала отпуска {days_until_start} дн. Работника нужно известить не позднее чем за две недели до начала отпуска"
+
+- id: tk.120.holidays
+  type: calculation
+  check: holidays_recalculation
+  severity: warn
+  norm:
+    title: "ст. 120 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "В период отпуска нет нерабочих праздничных дней — списывается {calendar_days} дн."
+    fail: "В период попадают нерабочие праздничные дни ({holidays_count}) — они не включаются в число дней отпуска. Будет списано {chargeable_days} дн. вместо {calendar_days}"
+
+- id: tk.136.pay-deadline
+  type: calculation
+  check: pay_deadline_3_days
+  severity: info
+  norm:
+    title: "ст. 136 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Отпускные выплатить не позднее {pay_by}"
+    fail: "Отпускные выплатить не позднее {pay_by}"
+
+- id: tk.124.no-two-years-row
+  type: law
+  check: no_leave_two_years_row
+  severity: warn
+  norm:
+    title: "ст. 124 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Отпуск предоставлялся в течение последних двух лет — нарушения нет"
+    fail: "Последний отпуск закончился {last_leave_end}. Непредоставление отпуска в течение двух лет подряд запрещено"
+
+- id: tk.262-267.privileged-category
+  type: law
+  check: privileged_category
+  severity: info
+  norm:
+    title: "ст. 262.2, 267 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Сотрудник относится к льготной категории ({category}) — вправе выбрать удобное время отпуска"
+    fail: "Сотрудник относится к льготной категории ({category}) — вправе выбрать удобное время отпуска"
+
+- id: tk.123.schedule-t7
+  type: law
+  check: schedule_t7_match
+  severity: warn
+  norm:
+    title: "ст. 123 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "Даты соответствуют утверждённому графику отпусков Т-7"
+    fail: "Даты отклоняются от утверждённого графика отпусков Т-7"
+
+- id: company.team-overlap
+  type: company
+  check: team_overlap
+  severity: warn
+  norm:
+    title: "Правило компании (не норма ТК РФ)"
+    url: "internal://company-rules/team-overlap"
+  effectiveFrom: "2026-01-01"
+  checkedAt: "2026-09-20"
+  messages:
+    pass: "В этот период отпусков в смене нет"
+    fail: "Пересечение по смене с коллегами: {names}"

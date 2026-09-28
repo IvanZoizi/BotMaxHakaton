@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smena}
+      POSTGRES_USER: ${POSTGRES_USER:-smena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smena}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smena}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-smena}:${POSTGRES_PASSWORD:-smena}@postgres:5432/${POSTGRES_DB:-smena}
+      AUTH_MODE: ${AUTH_MODE:-dev}
+      BOT_TOKEN: ${BOT_TOKEN:-dev-bot-token}
+      FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:-dev-file-secret}
+    volumes:
+      - api_storage:/app/storage
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.config:/etc/nginx/conf.d/default.conf:ro
+
+# Бот (maxapi) добавится сюда отдельным сервисом после того, как будет готова
+# его схема — сейчас в docker-compose участвуют только postgres/api/nginx.
+
+volumes:
+  postgres_data:
+  api_storage:
