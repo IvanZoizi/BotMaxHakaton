@@ -1,0 +1,50 @@
+.bar {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(17, 18, 20, 0.92);
+  border-radius: 999px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+}
+
+.tag {
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffb020;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+.btn {
+  border: none;
+  background: transparent;
+  color: #d1d1d6;
+  font-family: var(--font-family);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn.active {
+  background: white;
+  color: #111214;
+  font-weight: 600;
+}
+
+.btn.activeWarn {
+  background: var(--status-bad-text);
+  color: white;
+  font-weight: 600;
+}

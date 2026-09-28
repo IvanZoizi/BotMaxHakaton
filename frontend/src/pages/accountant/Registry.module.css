@@ -1,0 +1,15 @@
+.gapNote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  font-family: var(--font-family);
+  font-size: 12px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

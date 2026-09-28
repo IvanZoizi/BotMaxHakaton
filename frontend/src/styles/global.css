@@ -1,0 +1,80 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+/* Mini-app shell — centers the mobile frame on desktop/web MAX,
+   fills the viewport on the native mobile client. */
+.app-shell {
+  max-width: var(--screen-max-width);
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100dvh;
+}
+
+.screen-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.screen-content--tight {
+  gap: 8px;
+}
+
+.gap-4 {
+  height: 4px;
+}
+
+.gap-8 {
+  height: 8px;
+}
+
+/* Shared "bordered row" pattern from Figma (Team, Registry, Deadlines,
+   ReviewQueue): a plain 1px border, no radius, vertical-only padding —
+   flush against the screen's own 16px side gutter. */
+.bordered-row {
+  border: 1px solid var(--color-border);
+  padding: 12px 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

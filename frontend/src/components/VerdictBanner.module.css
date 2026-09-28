@@ -1,0 +1,41 @@
+.banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 14px;
+  width: 100%;
+}
+
+.headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.detail {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.ok {
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+}
+
+.warn {
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+}
+
+.bad {
+  background: var(--status-bad-bg);
+  color: var(--status-bad-text);
+}

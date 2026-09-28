@@ -1,0 +1,132 @@
+.docTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.docSubtitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.pdfPreview {
+  height: 220px;
+  border-radius: 14px;
+  background: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  color: var(--color-text-tertiary);
+}
+
+.pending {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  font-family: var(--font-family);
+  font-size: 13px;
+}
+
+
+.biometricBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.pulse {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--status-info-bg);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+}
+
+.biometricTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.biometricHint {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.successBox,
+.cancelledBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 0;
+}
+
+.successIcon {
+  margin: 0;
+  font-size: 40px;
+  color: var(--status-ok-text);
+}
+
+.successTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text-primary);
+}
+
+.cancelledIcon {
+  margin: 0;
+  font-size: 32px;
+  color: var(--status-bad-text);
+}
+
+.cancelledTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text-primary);
+}
+
+.cancelledHint {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}

@@ -1,0 +1,50 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.lead {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-text-primary);
+}
+
+.qrBox {
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
+  background: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--color-text-tertiary);
+}
+
+.textLink {
+  border: none;
+  background: none;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--status-info-text);
+  cursor: pointer;
+}
+
+.footnote {
+  margin-top: 8px;
+  padding: 8px 24px;
+  border-radius: 12px;
+  background: var(--surface-secondary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

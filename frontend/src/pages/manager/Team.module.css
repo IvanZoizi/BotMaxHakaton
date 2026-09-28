@@ -1,0 +1,10 @@
+.row {
+  /* layout comes from the shared .bordered-row global class */
+}
+
+.status {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

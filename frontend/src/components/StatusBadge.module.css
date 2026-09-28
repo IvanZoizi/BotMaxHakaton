@@ -1,0 +1,53 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ok {
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+}
+
+.warn {
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+}
+
+.bad {
+  background: var(--status-bad-bg);
+  color: var(--status-bad-text);
+}
+
+.info {
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+.neutral {
+  background: var(--surface-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.deadline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 13px;
+}
