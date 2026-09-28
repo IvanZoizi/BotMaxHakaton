@@ -1,0 +1,118 @@
+/*
+  Design tokens extracted from Figma file mQhuNOshLTorGyHCVpyEaf,
+  pages "01 — Foundations" and "02 — Components".
+*/
+:root {
+  color-scheme: light;
+
+  /* Typography — Golos Text */
+  --font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --font-display-size: 34px;
+  --font-display-line: 40px;
+  --font-display-weight: 600;
+
+  --font-headline-size: 22px;
+  --font-headline-line: 28px;
+  --font-headline-weight: 600;
+
+  --font-title-size: 20px;
+  --font-title-line: 26px;
+  --font-title-weight: 600;
+
+  --font-body-size: 16px;
+  --font-body-line: 22px;
+  --font-body-weight: 400;
+
+  --font-label-size: 13px;
+  --font-label-line: 18px;
+  --font-label-weight: 500;
+
+  --font-caption-size: 12px;
+  --font-caption-line: 16px;
+  --font-caption-weight: 400;
+
+  /* Spacing scale — multiples of 8px */
+  --space-8: 8px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  --tap-target-min: 44px;
+
+  /* Layout */
+  --screen-max-width: 390px;
+  --screen-side-padding: var(--space-16);
+
+  /* Status tokens — light (page 01, Colors — Status tokens) */
+  --status-ok-bg: #e7f5ec;
+  --status-ok-text: #177245;
+  --status-warn-bg: #fff4db;
+  --status-warn-text: #8a5a00;
+  --status-bad-bg: #fdecec;
+  --status-bad-text: #b42318;
+  --status-info-bg: #eaf1fc;
+  --status-info-text: #1f5fbf;
+
+  /* Neutral surface tokens — page 02, Components (exact var names used in
+     the generated component code: surface/primary, surface/secondary,
+     surface/tertiary, surface/inverse, text/primary, text/secondary,
+     text/tertiary, border/default) */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f4f4f5;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f4f4f5;
+  --surface-tertiary: #ececee;
+  --surface-inverse: #111214;
+  --color-border: #e5e7eb;
+  --color-text-primary: #111214;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+  --text-on-inverse: #ffffff;
+  --color-accent: #1f5ebf;
+  --color-accent-text: #ffffff;
+  --color-overlay-scrim: rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --status-ok-bg: #10291c;
+  --status-ok-text: #5fd39a;
+  --status-warn-bg: #2e2410;
+  --status-warn-text: #f5c451;
+  --status-bad-bg: #3a1714;
+  --status-bad-text: #ff8a80;
+  --status-info-bg: #14223a;
+  --status-info-text: #8ab4ff;
+
+  --color-bg: #000000;
+  --color-bg-secondary: #1c1c1e;
+  --surface-primary: #1c1c1e;
+  --surface-secondary: #26262a;
+  --surface-tertiary: #303034;
+  --surface-inverse: #f4f4f5;
+  --color-border: #38383a;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #98989e;
+  --color-text-tertiary: #6c6c70;
+  --color-text-inverse: #ffffff;
+  --text-on-inverse: #111214;
+  --color-accent: #4a90ff;
+  --color-accent-text: #ffffff;
+  --color-overlay-scrim: rgba(0, 0, 0, 0.6);
+}
+
+/*
+  Deliberately NOT gated behind `@media (prefers-color-scheme: dark)`.
+  The Figma file (mQhuNOshLTorGyHCVpyEaf) only contains light-mode screens —
+  the dark values on page "01 — Foundations" are documented status-color
+  swatches for future support, not full dark-themed mockups. Auto-following
+  system dark mode made the app default to dark while every reference
+  screenshot is light, which made pixel comparison confusing. Light is now
+  the only automatic default; dark is reachable solely via an explicit
+  `data-theme="dark"` toggle (see DevRoleSwitcher).
+*/

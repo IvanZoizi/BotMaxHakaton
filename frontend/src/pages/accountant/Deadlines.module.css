@@ -1,0 +1,29 @@
+.gapNote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  font-family: var(--font-family);
+  font-size: 12px;
+}
+
+.row {
+  /* box model comes from the shared .bordered-row global class */
+  align-items: flex-start;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.amount {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}

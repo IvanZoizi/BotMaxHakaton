@@ -1,0 +1,15 @@
+.lead {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.row {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.row:last-child {
+  border-bottom: none;
+}

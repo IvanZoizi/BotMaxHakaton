@@ -1,0 +1,50 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 16px 4px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.back {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  padding: 8px;
+  margin-left: -8px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.toast {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+  font-family: var(--font-family);
+  font-size: 14px;
+  text-align: center;
+}

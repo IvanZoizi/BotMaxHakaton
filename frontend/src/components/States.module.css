@@ -1,0 +1,128 @@
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.bar {
+  background: var(--surface-tertiary);
+  border-radius: 10px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyGlyph {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-tertiary);
+}
+
+.emptyMessage {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.emptyAction {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--status-info-text);
+  cursor: pointer;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.errorMessage {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+  max-width: 280px;
+}
+
+.retry {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--status-info-text);
+  cursor: pointer;
+}
+
+.forbidden {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.forbiddenIcon {
+  margin: 0;
+  font-size: 32px;
+}
+
+.forbiddenTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.forbiddenMessage {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.demoBadge {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 16px;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 13px;
+  text-align: center;
+}

@@ -1,0 +1,31 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.number {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.pdfPreview {
+  height: 220px;
+  border-radius: 14px;
+  background: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  color: var(--color-text-tertiary);
+}
+
+.integrity {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--status-ok-text);
+}

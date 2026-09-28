@@ -1,0 +1,152 @@
+.summary {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.deadlines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deadlines p {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--status-info-text);
+}
+
+.error {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--status-bad-text);
+}
+
+.alreadyResolved {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alreadyResolvedText {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+  font-family: var(--font-family);
+  font-size: 13px;
+}
+
+.successBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+}
+
+.successIcon {
+  margin: 0;
+  font-size: 40px;
+  color: var(--status-ok-text);
+}
+
+.successTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text-primary);
+}
+
+.successSubtitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--surface-secondary);
+}
+
+.stepRow {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+.stepIconDone {
+  color: var(--status-ok-text);
+  font-weight: 500;
+}
+
+.stepTextDone {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.stepIconPending {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.stepTextPending {
+  color: var(--color-text-secondary);
+}
+
+.reasonList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.reasonOption {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--surface-secondary);
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.reasonOptionSelected {
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+}
+
+.reasonText {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 60px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+.altDates {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}

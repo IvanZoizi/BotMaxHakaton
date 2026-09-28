@@ -1,0 +1,30 @@
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--surface-secondary);
+}
+
+.summaryTitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.summarySubtitle {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--status-bad-text);
+}
