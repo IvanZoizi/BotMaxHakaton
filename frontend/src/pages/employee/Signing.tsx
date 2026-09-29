@@ -56,7 +56,7 @@ export default function Signing() {
     }
     setStep('biometric');
     const result = await maxBridge.biometric.authenticate();
-    if (result.status === 'success') {
+    if (result.status === 'authorized') {
       await signDocument(id, 'biometric');
       maxBridge.haptics.impact('medium');
       setStep('success');
@@ -140,7 +140,9 @@ export default function Signing() {
         <p className={styles.docSubtitle}>
           {KIND_DESCRIPTION[doc.kind] ?? 'Документ формируется на основании согласованной заявки на отпуск'}
         </p>
-        <div className={styles.pdfPreview}>PDF preview</div>
+        <div className={styles.pdfPreview}>
+          <iframe src={doc.pdfUrl} title={doc.number} className={styles.pdfFrame} />
+        </div>
         {pendingSigner && (
           <p className={styles.pending}>
             Кто ещё должен подписать: {alreadySigned.map((s) => s.fullName).join(', ') || '—'}

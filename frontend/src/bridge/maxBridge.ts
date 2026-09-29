@@ -10,7 +10,14 @@
 
 export type MaxPlatform = 'ios' | 'android' | 'desktop' | 'web';
 
-export type BiometricAuthResult = { status: 'success' } | { status: 'cancelled' } | { status: 'fallback' };
+/** Реальные статусы BiometricManager.authenticate() (dev.max.ru/docs/webapps/bridge) —
+ * успех резолвится как 'authorized' + token, отказ/ошибка — это reject, а не
+ * резолв с 'cancelled'. 'cancelled' и 'unavailable' здесь — наша интерпретация
+ * (см. maxBridge.biometric.authenticate ниже), не поле из бриджа. */
+export type BiometricAuthResult =
+  | { status: 'authorized'; token: string }
+  | { status: 'cancelled' }
+  | { status: 'unavailable' };
 
 /** Реальная сигнатура WebApp.shareMaxContent/shareContent (dev.max.ru/docs/webapps/bridge) —
  * ровно text/link, один из двух обязателен; полей title/url в бридже нет.
@@ -26,9 +33,18 @@ interface HapticFeedback {
   impactOccurred: (style: 'soft' | 'light' | 'medium' | 'heavy' | 'rigid') => void;
 }
 
+/** init() — реально возвращает больше полей (type, accessRequested,
+ * tokenSaved, deviceId), но нам достаточно available/accessGranted, чтобы
+ * решить, вызывать ли requestAccess() перед authenticate(). */
+interface BiometryInfo {
+  available: boolean;
+  accessGranted: boolean;
+}
+
 interface BiometricManager {
-  init: () => Promise<{ available: boolean }>;
-  authenticate: () => Promise<BiometricAuthResult>;
+  init: () => Promise<BiometryInfo>;
+  requestAccess: (reason?: string) => Promise<void>;
+  authenticate: (reason?: string) => Promise<{ status: 'authorized'; token: string }>;
 }
 
 interface WebAppBridge {
@@ -38,11 +54,11 @@ interface WebAppBridge {
   deviceName?: string;
   BiometricManager: BiometricManager;
   HapticFeedback: HapticFeedback;
-  shareMaxContent: (params: ShareMaxContentParams) => Promise<void>;
-  shareContent: (params: ShareMaxContentParams) => Promise<void>;
-  downloadFile: (url: string, filename: string) => Promise<void>;
-  openCodeReader: () => Promise<{ data: string } | null>;
-  requestContact: () => Promise<{ phone: string } | null>;
+  shareMaxContent: (params: ShareMaxContentParams) => Promise<{ status: 'shared' | 'cancelled' }>;
+  shareContent: (params: ShareMaxContentParams) => Promise<{ status: 'shared' | 'cancelled' }>;
+  downloadFile: (url: string, filename: string) => Promise<{ status: 'downloading' | 'cancelled' }>;
+  openCodeReader: (fileSelect?: boolean) => Promise<{ value: string }>;
+  requestContact: () => Promise<{ phone: string }>;
 }
 
 declare global {
@@ -68,8 +84,9 @@ const mockBridge: WebAppBridge = {
   platform: 'web',
   deviceName: 'Dev Browser',
   BiometricManager: {
-    init: () => delay({ available: true }, 0),
-    authenticate: () => delay({ status: 'success' }),
+    init: () => delay({ available: true, accessGranted: true }, 0),
+    requestAccess: () => delay(undefined, 0),
+    authenticate: () => delay({ status: 'authorized' as const, token: 'dev-token' }),
   },
   HapticFeedback: {
     impactOccurred: () => {
@@ -78,9 +95,11 @@ const mockBridge: WebAppBridge = {
   },
   shareMaxContent: async (params) => {
     console.info('[dev] shareMaxContent', params);
+    return { status: 'shared' as const };
   },
   shareContent: async (params) => {
     console.info('[dev] shareContent', params);
+    return { status: 'shared' as const };
   },
   downloadFile: async (url, filename) => {
     console.info('[dev] downloadFile', { url, filename });
@@ -90,10 +109,11 @@ const mockBridge: WebAppBridge = {
     link.target = '_blank';
     link.rel = 'noopener';
     link.click();
+    return { status: 'downloading' as const };
   },
   openCodeReader: async () => {
     console.info('[dev] openCodeReader — no camera in dev mock');
-    return null;
+    return Promise.reject(new Error('no camera in dev mock'));
   },
   requestContact: async () => delay({ phone: '+70000000000' }),
 };
@@ -190,10 +210,40 @@ export const maxBridge = {
     return readStartParam(getBridge().initData);
   },
   biometric: {
-    init: () => safeCallWithTimeout(() => getBridge().BiometricManager.init(), { available: false }, 1000),
-    authenticate: async (): Promise<BiometricAuthResult> => {
-      await safeCallWithTimeout(() => getBridge().BiometricManager.init(), { available: false }, 1000);
-      return safeCallWithTimeout(() => getBridge().BiometricManager.authenticate(), { status: 'fallback' }, 1500);
+    /** Полный флоу из upstream-документации: init() -> при !accessGranted
+     * запросить requestAccess() -> authenticate(). Раньше здесь просто
+     * дважды дёргали init()+authenticate() и сверяли результат с полем
+     * 'success', которого в реальном бридже не существует (там 'authorized')
+     * — из-за этого успешная биометрия ВСЕГДА считалась неуспехом и тихо
+     * скатывалась на ручное подтверждение, даже когда пользователь реально
+     * приложил палец/лицо. requestAccess() тоже не вызывался вовсе — без
+     * него authenticate() на первом запуске может отклоняться, т.к. доступ
+     * ещё не запрошен.
+     */
+    authenticate: async (reason?: string): Promise<BiometricAuthResult> => {
+      const info = await safeCallWithTimeout(
+        () => getBridge().BiometricManager.init(),
+        { available: false, accessGranted: false },
+        1000,
+      );
+      if (!info.available) return { status: 'unavailable' };
+
+      if (!info.accessGranted) {
+        const granted = await safeCall(
+          () => getBridge().BiometricManager.requestAccess(reason).then(() => true),
+          false,
+        );
+        if (!granted) return { status: 'unavailable' };
+      }
+
+      return safeCallWithTimeout(
+        () =>
+          getBridge()
+            .BiometricManager.authenticate(reason)
+            .then((r): BiometricAuthResult => r),
+        { status: 'cancelled' },
+        3000,
+      );
     },
   },
   haptics: {

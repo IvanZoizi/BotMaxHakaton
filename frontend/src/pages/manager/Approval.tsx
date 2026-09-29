@@ -95,7 +95,7 @@ export default function Approval() {
 
   async function handleApproveClick() {
     const result = await maxBridge.biometric.authenticate();
-    if (result.status === 'success') {
+    if (result.status === 'authorized') {
       await doApprove('biometric');
     } else {
       setConfirmFallback(true);

@@ -12,6 +12,7 @@ from ..auth import get_current_employee, require_role
 from ..db import get_db
 from ..db_models import Employee, Location
 from ..errors import conflict, forbidden, not_found
+from ..rules.models import Role
 from ..schemas import CreatedEmployee, CreateEmployeeRequest, LeaveBalance
 from ..schemas import Employee as EmployeeDTO
 from ..schemas import LinkEmployeeRequest, Me, ShiftOutcomeRequest, UpdateEmployeeRequest
@@ -57,13 +58,19 @@ def create_employee(
             raise not_found("Точка не найдена")
         location_id = location.id
 
+    # employee — это ещё и «я сам работаю и могу уйти в отпуск», а не
+    # функция вроде manager/accountant/admin. Раньше роль была одна: у
+    # бухгалтера/руководителя/админа не было employee, и они физически не
+    # видели «Оформить отпуск» — свой же отпуск себе поставить было нельзя.
+    roles = [payload.role.value] if payload.role == Role.EMPLOYEE else [Role.EMPLOYEE.value, payload.role.value]
+
     employee = Employee(
         company_id=manager.company_id,
         location_id=location_id,
         invite_code=_generate_invite_code(),
         full_name=payload.full_name,
         position=payload.position,
-        roles=[payload.role.value],
+        roles=roles,
         hire_date=date.today(),
         leave_balance_days=28,
         balance_as_of=date.today(),

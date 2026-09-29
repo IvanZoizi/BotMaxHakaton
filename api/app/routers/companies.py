@@ -40,7 +40,10 @@ def create_company(payload: CreateCompanyRequest, db: Session = Depends(get_db))
         max_user_id=payload.max_user_id,
         full_name=payload.admin_full_name,
         position="Владелец компании",
-        roles=["admin"],
+        # admin — функция сверх основной работы, не замена ей: владелец
+        # тоже сотрудник и должен видеть «Оформить отпуск» на себя (см. тот
+        # же комментарий в routers/employees.py create_employee).
+        roles=["admin", "employee"],
         hire_date=date.today(),
         leave_balance_days=28,
         balance_as_of=date.today(),

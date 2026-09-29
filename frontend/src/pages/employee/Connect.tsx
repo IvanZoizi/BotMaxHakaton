@@ -30,11 +30,11 @@ export default function Connect() {
 
   async function handleScan() {
     const result = await maxBridge.openCodeReader();
-    if (!result?.data) return; // отменено или камера недоступна
+    if (!result?.value) return; // отменено или камера недоступна
     // QR кодирует ту же ссылку-приглашение, что бот строит в /add_employee
     // (join_<code> — см. bot/app/routers/employee_admin.py) — либо голый
     // payload, либо полный URL с ним; вытаскиваем код в обоих случаях.
-    const match = result.data.match(/join_([\w-]+)/);
+    const match = result.value.match(/join_([\w-]+)/);
     if (!match) {
       setError('QR-код не распознан — не найден код приглашения');
       return;
