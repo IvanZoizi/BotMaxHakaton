@@ -117,6 +117,28 @@ async function safeCall<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
+/**
+ * Same as safeCall, but also races a timeout — the real bridge script can
+ * take a while to internally reject (no biometry hardware, not the actual
+ * MAX host, etc.), which made "Согласовать"/"Подписать" feel stuck for a
+ * few seconds before the confirm-fallback sheet appeared. Biometric calls
+ * should never make the user wait this long either way.
+ */
+async function safeCallWithTimeout<T>(fn: () => Promise<T>, fallback: T, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), timeoutMs);
+  });
+  try {
+    return await Promise.race([fn(), timeout]);
+  } catch (err) {
+    console.warn('[maxBridge] call failed, falling back', err);
+    return fallback;
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
 export const maxBridge = {
   isNative: isRealBridgeAvailable,
   get platform(): MaxPlatform {
@@ -126,10 +148,10 @@ export const maxBridge = {
     return getBridge().initData;
   },
   biometric: {
-    init: () => safeCall(() => getBridge().BiometricManager.init(), { available: false }),
+    init: () => safeCallWithTimeout(() => getBridge().BiometricManager.init(), { available: false }, 1000),
     authenticate: async (): Promise<BiometricAuthResult> => {
-      await safeCall(() => getBridge().BiometricManager.init(), { available: false });
-      return safeCall(() => getBridge().BiometricManager.authenticate(), { status: 'fallback' });
+      await safeCallWithTimeout(() => getBridge().BiometricManager.init(), { available: false }, 1000);
+      return safeCallWithTimeout(() => getBridge().BiometricManager.authenticate(), { status: 'fallback' }, 1500);
     },
   },
   haptics: {

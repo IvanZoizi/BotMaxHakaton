@@ -65,6 +65,12 @@ export default function DocumentDetail() {
             />
           ))}
 
+        {doc.signers.some((s) => !s.signedAt) && (
+          <p className={styles.pending}>
+            Ожидает подписи: {doc.signers.find((s) => !s.signedAt)!.fullName}
+          </p>
+        )}
+
         <Button onClick={() => maxBridge.downloadFile(doc.pdfUrl, `${doc.number}.pdf`)}>Скачать</Button>
         <Button
           variant="text"
