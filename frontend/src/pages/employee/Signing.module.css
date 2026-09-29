@@ -31,6 +31,13 @@
   color: var(--color-text-secondary);
 }
 
+.error {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--status-bad-text);
+}
+
 .warning {
   padding: 12px;
   border-radius: 12px;

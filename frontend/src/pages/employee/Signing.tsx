@@ -5,7 +5,8 @@ import { Button } from '../../components/Button';
 import { SignatureStamp } from '../../components/DocumentCard';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { getDocument, signDocument } from '../../api/mockApi';
+import { getDocument, getMe, signDocument } from '../../api/mockApi';
+import { ApiError } from '../../api/errors';
 import { useAsync } from '../../lib/useAsync';
 import { maxBridge } from '../../bridge/maxBridge';
 import { formatDateTime } from '../../lib/date';
@@ -29,7 +30,9 @@ export default function Signing() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('idle');
   const [confirmSheetOpen, setConfirmSheetOpen] = useState(false);
+  const [signError, setSignError] = useState<string | null>(null);
   const { data: doc, loading, error, reload } = useAsync(() => getDocument(id), [id]);
+  const { data: me } = useAsync(getMe, []);
 
   if (loading) {
     return (
@@ -49,7 +52,18 @@ export default function Signing() {
     );
   }
 
+  async function finishSigning(method: 'biometric' | 'confirm') {
+    try {
+      await signDocument(id, method);
+      setStep('success');
+    } catch (e) {
+      setStep('idle');
+      setSignError(e instanceof ApiError ? e.message : 'Не удалось подписать документ');
+    }
+  }
+
   async function startSigning() {
+    setSignError(null);
     if (!maxBridge.isNative()) {
       setConfirmSheetOpen(true);
       return;
@@ -57,9 +71,8 @@ export default function Signing() {
     setStep('biometric');
     const result = await maxBridge.biometric.authenticate();
     if (result.status === 'success') {
-      await signDocument(id, 'biometric');
       maxBridge.haptics.impact('medium');
-      setStep('success');
+      await finishSigning('biometric');
     } else if (result.status === 'cancelled') {
       setStep('cancelled');
     } else {
@@ -70,10 +83,11 @@ export default function Signing() {
 
   async function confirmWithoutBiometric() {
     setConfirmSheetOpen(false);
-    await signDocument(id, 'confirm');
-    setStep('success');
+    await finishSigning('confirm');
   }
 
+  const myEntry = me && doc.signers.find((s) => s.employeeId === me.id);
+  const alreadySignedByMe = !!myEntry?.signedAt;
   const pendingSigner = doc.signers.find((s) => !s.signedAt);
   const alreadySigned = doc.signers.filter((s) => s.signedAt);
 
@@ -90,7 +104,7 @@ export default function Signing() {
     );
   }
 
-  if (step === 'success') {
+  if (step === 'success' || alreadySignedByMe) {
     return (
       <div className="screen">
         <Header title="Подписание документа" />
@@ -99,13 +113,17 @@ export default function Signing() {
             <p className={styles.successIcon}>✓</p>
             <p className={styles.successTitle}>Документ подписан</p>
           </div>
-          {alreadySigned[alreadySigned.length - 1] && (
+          {alreadySigned.map((signer) => (
             <SignatureStamp
-              signerName={alreadySigned[alreadySigned.length - 1].fullName}
-              signedAt={formatDateTime(alreadySigned[alreadySigned.length - 1].signedAt!)}
-              method={alreadySigned[alreadySigned.length - 1].method ?? 'confirm'}
-              code={alreadySigned[alreadySigned.length - 1].employeeId.slice(-6)}
+              key={signer.employeeId}
+              signerName={signer.fullName}
+              signedAt={formatDateTime(signer.signedAt!)}
+              method={signer.method ?? 'confirm'}
+              code={signer.employeeId.slice(-6)}
             />
+          ))}
+          {pendingSigner && (
+            <p className={styles.pending}>Ожидает подписи: {pendingSigner.fullName}</p>
           )}
           <Button onClick={() => navigate(-1)}>Готово</Button>
         </div>
@@ -141,11 +159,19 @@ export default function Signing() {
           {KIND_DESCRIPTION[doc.kind] ?? 'Документ формируется на основании согласованной заявки на отпуск'}
         </p>
         <div className={styles.pdfPreview}>PDF preview</div>
-        {pendingSigner && (
-          <p className={styles.pending}>
-            Кто ещё должен подписать: {alreadySigned.map((s) => s.fullName).join(', ') || '—'}
-          </p>
-        )}
+
+        {alreadySigned.map((signer) => (
+          <SignatureStamp
+            key={signer.employeeId}
+            signerName={signer.fullName}
+            signedAt={formatDateTime(signer.signedAt!)}
+            method={signer.method ?? 'confirm'}
+            code={signer.employeeId.slice(-6)}
+          />
+        ))}
+
+        {signError && <p className={styles.error}>{signError}</p>}
+
         <div className={styles.warning}>
           Подписывая документ, вы подтверждаете согласие с его содержанием. Отменить подпись после
           отправки будет нельзя.

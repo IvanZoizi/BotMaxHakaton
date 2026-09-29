@@ -29,3 +29,10 @@
   font-size: 13px;
   color: var(--status-ok-text);
 }
+
+.pending {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}

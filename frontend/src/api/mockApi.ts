@@ -516,11 +516,53 @@ export async function signDocument(id: string, method: 'biometric' | 'confirm'):
   const me = currentMe();
   const doc = DOCUMENTS[id];
   if (!doc) throw notFound('Документ не найден');
-  doc.signers = [
-    ...doc.signers,
-    { employeeId: me.id, fullName: me.fullName, role: me.roles[0], signedAt: new Date().toISOString(), method },
-  ];
-  doc.status = 'signed';
+
+  const existing = doc.signers.find((s) => s.employeeId === me.id);
+  if (existing?.signedAt) {
+    // Idempotent — this person already signed. Duplicate taps must not pile
+    // up duplicate signature stamps (this used to be possible: re-opening
+    // the Signing screen and tapping "Подписать" again just appended
+    // another entry every time).
+    return delay(doc);
+  }
+
+  // Приказ Т-6 needs two signatures in sequence — руководитель, затем
+  // сотрудник (see PostApproval's "Ожидает подписания" step). A manager
+  // signing it before the employee is who creates the placeholder below;
+  // an employee can't complete it before the manager has.
+  if (doc.kind === 'order_t6' && !me.roles.includes('manager')) {
+    const managerSigned = doc.signers.some((s) => s.role === 'manager' && s.signedAt);
+    if (!managerSigned) {
+      throw conflict('Сначала документ должен подписать руководитель');
+    }
+  }
+
+  const signedAt = new Date().toISOString();
+  if (existing) {
+    existing.signedAt = signedAt;
+    existing.method = method;
+  } else {
+    doc.signers.push({ employeeId: me.id, fullName: me.fullName, role: me.roles[0], signedAt, method });
+  }
+
+  if (doc.kind === 'order_t6' && me.roles.includes('manager')) {
+    // Manager just went first — queue the request's employee as the next
+    // required signer instead of marking the document fully signed.
+    const request = LEAVE_REQUESTS[doc.requestId];
+    if (request && !doc.signers.some((s) => s.employeeId === request.employee.id)) {
+      doc.signers.push({
+        employeeId: request.employee.id,
+        fullName: request.employee.fullName,
+        role: 'employee',
+        signedAt: null,
+        method: null,
+      });
+    }
+    doc.status = 'to_sign';
+  } else {
+    doc.status = 'signed';
+  }
+
   return delay(doc, 600);
 }
 
