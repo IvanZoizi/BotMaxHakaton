@@ -1,7 +1,10 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  /* Above the DEV role-switcher bar (z-index: 200) — a modal sheet must
+     always be the topmost, clickable layer; it was previously rendering
+     UNDER the dev bar, hiding/blocking its own primary button. */
+  z-index: 300;
   display: flex;
   align-items: flex-end;
   justify-content: center;
