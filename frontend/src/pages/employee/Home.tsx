@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { ListHeader } from '../../components/Header';
 import { Button } from '../../components/Button';
 import { BottomNav } from '../../components/BottomNav';
@@ -31,6 +31,13 @@ export default function Home() {
         <SkeletonScreen />
       </div>
     );
+  }
+
+  // Реальный (ещё не привязанный) MAX-аккаунт: RootRedirect/RoleGate этого
+  // не знают заранее (см. persona.isLinked — dev-заглушка), так что первым
+  // реальным сигналом о NOT_LINKED оказывается 403 именно здесь.
+  if (me.error?.code === 'NOT_LINKED') {
+    return <Navigate to="/connect" replace />;
   }
 
   if (me.error || !me.data) {

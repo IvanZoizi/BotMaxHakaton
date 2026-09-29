@@ -17,20 +17,27 @@ import type { Role } from '../api/types';
 
 export type Persona = {
   role: Role;
+  /** Все роли реального сотрудника (GET /me → roles) — обычно одна, но
+   * владелец компании нередко сам же и руководитель точки. `role` — какая
+   * из них сейчас выбрана в интерфейсе, см. RoleSwitcher. */
+  roles: Role[];
   isLinked: boolean;
 };
 
 const STORAGE_KEY = 'smena.dev-persona';
 
 function loadInitial(): Persona {
-  if (typeof window === 'undefined') return { role: 'employee', isLinked: true };
+  if (typeof window === 'undefined') return { role: 'employee', roles: ['employee'], isLinked: true };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Persona;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Persona> & { role: Role };
+      return { roles: [parsed.role], isLinked: true, ...parsed };
+    }
   } catch {
     /* ignore malformed storage */
   }
-  return { role: 'employee', isLinked: true };
+  return { role: 'employee', roles: ['employee'], isLinked: true };
 }
 
 let state: Persona = loadInitial();
@@ -51,4 +58,20 @@ export function setPersona(next: Partial<Persona>) {
 export function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/** Вызывается один раз при старте внутри реального MAX Bridge (см. App.tsx)
+ * после успешного GET /me — заменяет моковые role/isLinked настоящими. */
+export function hydrateFromMe(roles: Role[]): void {
+  const current = getPersona();
+  setPersona({
+    roles,
+    role: roles.includes(current.role) ? current.role : (roles[0] ?? 'employee'),
+    isLinked: true,
+  });
+}
+
+/** GET /me ответил 403 NOT_LINKED — реальный сотрудник ещё не подключён. */
+export function markNotLinked(): void {
+  setPersona({ isLinked: false });
 }
