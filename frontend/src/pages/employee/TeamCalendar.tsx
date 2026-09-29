@@ -2,7 +2,7 @@ import { ListHeader } from '../../components/Header';
 import { EmployeeRow } from '../../components/EmployeeRow';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { getTeamCalendar } from '../../api/mockApi';
+import { getTeamCalendar } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatRange } from '../../lib/date';
 import styles from './TeamCalendar.module.css';

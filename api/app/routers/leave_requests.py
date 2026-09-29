@@ -13,6 +13,7 @@ from ..auth import get_current_employee
 from ..db import get_db
 from ..db_models import Document, Employee, LeaveRequest
 from ..errors import already_resolved, conflict, forbidden, not_found, rule_violation, validation_error
+from ..notify_client import notify_leave_request_decided, notify_leave_request_submitted
 from ..pdf import generate_document_pdf
 from ..rules import EmployeeContext, LeaveRequestContext, TeamOverlap
 from ..rules import Verdict as VerdictDTO
@@ -226,7 +227,39 @@ def submit_leave_request(
     )
     db.commit()
     db.refresh(leave_request)
+
+    _notify_managers_of_submission(db, leave_request, employee)
+
     return _to_detail(db, leave_request)
+
+
+def _notify_managers_of_submission(db: Session, leave_request: LeaveRequest, employee: Employee) -> None:
+    """README/контракт §2 сценарий 4: «worker шлёт карточку руководителю в
+    чат (вне этого API)» — этот вызов и есть тот worker. Шлём всем
+    руководителям точки, не только одному — на точке может быть не один."""
+    managers = (
+        db.execute(
+            select(Employee).where(
+                Employee.location_id == employee.location_id,
+                Employee.roles.any("manager"),
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for manager in managers:
+        notify_leave_request_submitted(
+            manager_max_user_id=manager.max_user_id,
+            request_id=str(leave_request.id),
+            employee_full_name=employee.full_name,
+            employee_position=employee.position,
+            location_name=employee.location.name if employee.location else None,
+            start_date=leave_request.start_date.isoformat(),
+            end_date=leave_request.end_date.isoformat(),
+            calendar_days=leave_request.calendar_days,
+            verdict_level=leave_request.verdict_level,
+            pay_deadline=leave_request.pay_deadline.isoformat(),
+        )
 
 
 def _get_request_or_404(db: Session, request_id: str) -> LeaveRequest:
@@ -304,6 +337,15 @@ def approve_leave_request(
     )
     db.commit()
     db.refresh(leave_request)
+
+    notify_leave_request_decided(
+        employee_max_user_id=leave_request.employee.max_user_id,
+        request_id=str(leave_request.id),
+        status="approved",
+        start_date=leave_request.start_date.isoformat(),
+        end_date=leave_request.end_date.isoformat(),
+    )
+
     return _to_detail(db, leave_request)
 
 
@@ -344,6 +386,16 @@ def reject_leave_request(
     )
     db.commit()
     db.refresh(leave_request)
+
+    notify_leave_request_decided(
+        employee_max_user_id=leave_request.employee.max_user_id,
+        request_id=str(leave_request.id),
+        status="rejected",
+        start_date=leave_request.start_date.isoformat(),
+        end_date=leave_request.end_date.isoformat(),
+        reject_reason=leave_request.reject_reason,
+    )
+
     return _to_detail(db, leave_request)
 
 

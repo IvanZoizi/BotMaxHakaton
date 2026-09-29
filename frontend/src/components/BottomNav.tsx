@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAsync } from '../lib/useAsync';
-import { listLeaveRequests } from '../api/mockApi';
+import { listLeaveRequests } from '../api/client';
 import styles from './BottomNav.module.css';
 
 interface NavItemConfig {

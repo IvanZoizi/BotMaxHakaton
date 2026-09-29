@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { Button } from '../../components/Button';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { acceptShiftOffer, declineShiftOffer, getShiftOffer } from '../../api/mockApi';
+import { acceptShiftOffer, declineShiftOffer, getShiftOffer } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import styles from './ShiftOfferScreen.module.css';
 

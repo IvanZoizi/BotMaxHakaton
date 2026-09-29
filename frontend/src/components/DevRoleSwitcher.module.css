@@ -7,10 +7,13 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(17, 18, 20, 0.92);
+  /* surface-inverse flips with the theme (dark pill on light mode, light
+     pill on dark mode) so this dev-only overlay stays visible against the
+     app content either way instead of being hardcoded to near-black. */
+  background: var(--surface-inverse);
   border-radius: 999px;
   padding: 4px 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px var(--color-overlay-scrim);
   max-width: calc(100vw - 16px);
   overflow-x: auto;
 }
@@ -27,7 +30,8 @@
 .btn {
   border: none;
   background: transparent;
-  color: #d1d1d6;
+  color: var(--text-on-inverse);
+  opacity: 0.7;
   font-family: var(--font-family);
   font-size: 12px;
   padding: 6px 10px;
@@ -38,13 +42,15 @@
 }
 
 .btn.active {
-  background: white;
-  color: #111214;
+  background: var(--surface-primary);
+  color: var(--color-text-primary);
+  opacity: 1;
   font-weight: 600;
 }
 
 .btn.activeWarn {
   background: var(--status-bad-text);
   color: white;
+  opacity: 1;
   font-weight: 600;
 }

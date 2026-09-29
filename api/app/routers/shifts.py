@@ -10,6 +10,7 @@ from ..db_models import Employee, Shift
 from ..db_models import ShiftOffer as ShiftOfferRow
 from ..errors import already_resolved, forbidden, not_found
 from ..matching import score_candidates
+from ..notify_client import notify_shift_offer_proposed
 from ..schemas import CreateShiftOfferRequest, ShiftCandidate
 from ..schemas import ShiftOffer as ShiftOfferDTO
 from ..util import parse_uuid_or_404
@@ -94,6 +95,41 @@ def create_shift_offer(
     )
     db.commit()
     db.refresh(offer)
+
+    candidate = db.get(Employee, offer.employee_id)
+    if candidate is not None:
+        notify_shift_offer_proposed(
+            candidate_max_user_id=candidate.max_user_id,
+            offer_id=str(offer.id),
+            location_name=candidate.location.name if candidate.location else None,
+            score=offer.score,
+            reasons=offer.reasons,
+        )
+
+    return _to_offer_dto(offer)
+
+
+@router.get("/shift-offers/{offer_id}", response_model=ShiftOfferDTO)
+def get_shift_offer(
+    offer_id: str,
+    employee: Employee = Depends(get_current_employee),
+    db: Session = Depends(get_db),
+) -> ShiftOfferDTO:
+    """Не входит в 16 путей openapi.yaml, но помечена в контракте (§1) как
+    «Рекомендация»: экран «Предложение смены» открывается по deeplink
+    `off_<id>` и без этого эндпоинта ему неоткуда взять данные — в отличие
+    от GAP'ов, тут нет решения, которое требует команда, схема уже есть
+    (components.schemas.ShiftOffer)."""
+    offer = db.get(ShiftOfferRow, parse_uuid_or_404(offer_id, "Предложение не найдено"))
+    if offer is None:
+        raise not_found("Предложение не найдено")
+    shift = db.get(Shift, offer.shift_id)
+    is_target = offer.employee_id == employee.id
+    is_manager_same_location = (
+        "manager" in employee.roles and shift is not None and shift.location_id == employee.location_id
+    )
+    if not (is_target or is_manager_same_location):
+        raise forbidden("Это предложение вам недоступно")
     return _to_offer_dto(offer)
 
 

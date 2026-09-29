@@ -133,7 +133,7 @@ def test_no_leave_two_years_row_warns_manager(engine: RulesEngine) -> None:
 
 def test_rules_are_loaded_as_data_with_stable_version(engine: RulesEngine) -> None:
     rules = engine.list_rules()
-    assert len(rules) == 9
+    assert len(rules) == 11
     assert all(rule.type.value in {"law", "calculation", "company"} for rule in rules)
     assert len(engine.rules_version) == 8  # short sha256 of rules.yaml
 
@@ -142,3 +142,40 @@ def test_end_before_start_is_rejected(engine: RulesEngine) -> None:
     request = LeaveRequestContext(start_date=date(2026, 10, 18), end_date=date(2026, 10, 5), today=TODAY)
     with pytest.raises(ValueError):
         engine.evaluate(marina(), request)
+
+
+def test_first_year_six_months_warns_before_eligible(engine: RulesEngine) -> None:
+    # Нанята 2026-08-01 — полгода истекает 2027-02-01, запрошенный старт раньше.
+    request = LeaveRequestContext(start_date=date(2026, 12, 1), end_date=date(2026, 12, 14), today=TODAY)
+    verdict = engine.evaluate(marina(hire_date=date(2026, 8, 1)), request)
+
+    check = by_rule(verdict.checks, "tk.122.first-year-six-months")
+    assert check.passed is False
+    assert "2027-02-01" in check.message
+    assert verdict.level == VerdictLevel.YELLOW
+
+
+def test_first_year_six_months_skipped_for_exempt_category(engine: RulesEngine) -> None:
+    request = LeaveRequestContext(start_date=date(2026, 12, 1), end_date=date(2026, 12, 14), today=TODAY)
+    verdict = engine.evaluate(marina(hire_date=date(2026, 8, 1), category="minor"), request)
+
+    rule_ids = {c.rule_id for c in verdict.checks}
+    assert "tk.122.first-year-six-months" not in rule_ids
+
+
+def test_extended_base_duration_informational_for_disabled_employee(engine: RulesEngine) -> None:
+    request = LeaveRequestContext(start_date=date(2026, 10, 5), end_date=date(2026, 10, 18), today=TODAY)
+    verdict = engine.evaluate(marina(category="disabled"), request)
+
+    check = by_rule(verdict.checks, "tk.115-267.extended-base-duration")
+    assert check.passed is True
+    assert "30" in check.message
+
+
+def test_pay_by_shifts_off_weekend_to_preceding_workday(engine: RulesEngine) -> None:
+    # 2026-12-30 - 3 календарных дня = 2026-12-27, воскресенье.
+    request = LeaveRequestContext(start_date=date(2026, 12, 30), end_date=date(2027, 1, 12), today=TODAY)
+    verdict = engine.evaluate(marina(), request)
+
+    assert verdict.pay_by == date(2026, 12, 25)  # пятница
+    assert verdict.pay_by.weekday() < 5

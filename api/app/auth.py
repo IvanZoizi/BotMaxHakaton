@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import uuid
 from urllib.parse import parse_qsl
 
 from fastapi import Depends, Header
@@ -53,11 +52,13 @@ def get_current_employee(
     db: Session = Depends(get_db),
 ) -> Employee:
     if settings.auth_mode == "dev" and x_debug_employee_id:
-        try:
-            employee_id = uuid.UUID(x_debug_employee_id)
-        except ValueError:
-            raise validation_error("X-Debug-Employee-Id должен быть UUID") from None
-        employee = db.get(Employee, employee_id)
+        # Ключ — max_user_id, не первичный ключ employees.id: тот же способ
+        # резолва, что и прод-ветка ниже, только без проверки HMAC. Так
+        # фронтенд может слать стабильный слаг ('emp-marina') не зная
+        # сгенерированных БД UUID.
+        employee = db.execute(
+            select(Employee).where(Employee.max_user_id == x_debug_employee_id)
+        ).scalar_one_or_none()
         if employee is None:
             raise not_linked()
         return employee

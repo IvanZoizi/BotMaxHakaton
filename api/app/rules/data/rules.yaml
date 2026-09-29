@@ -47,6 +47,32 @@
     pass: "Срок извещения соблюдён — уведомление до {notify_by}"
     fail: "До начала отпуска {days_until_start} дн. Работника нужно известить не позднее чем за две недели до начала отпуска"
 
+- id: tk.122.first-year-six-months
+  type: law
+  check: first_year_six_months
+  severity: warn
+  norm:
+    title: "ст. 122 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-29"
+  messages:
+    pass: "Право на отпуск за первый год работы наступило"
+    fail: "Право на отпуск за первый год работы наступает {eligible_from} (через 6 месяцев непрерывной работы). До этой даты — только по соглашению сторон"
+
+- id: tk.115-267.extended-base-duration
+  type: law
+  check: extended_base_duration
+  severity: info
+  norm:
+    title: "ст. 115, 267 ТК РФ"
+    url: "https://www.consultant.ru/document/cons_doc_LAW_34683/"
+  effectiveFrom: "2002-02-01"
+  checkedAt: "2026-09-29"
+  messages:
+    pass: "Базовый отпуск сотрудника — {days} дн., а не 28 ({norm_title})"
+    fail: "Базовый отпуск сотрудника — {days} дн., а не 28 ({norm_title})"
+
 - id: tk.120.holidays
   type: calculation
   check: holidays_recalculation

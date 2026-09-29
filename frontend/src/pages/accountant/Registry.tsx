@@ -4,7 +4,7 @@ import { DocumentCard } from '../../components/DocumentCard';
 import { DocumentStatusBadge } from '../../components/StatusBadge';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { listAllDocumentsWithOwner } from '../../api/mockApi';
+import { listAllDocumentsWithOwner } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatRuDateTimeLong } from '../../lib/date';
 import { documentStatusText } from '../../lib/documentStatusText';

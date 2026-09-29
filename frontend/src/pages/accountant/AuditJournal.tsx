@@ -2,7 +2,7 @@ import { ListHeader } from '../../components/Header';
 import { Button } from '../../components/Button';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState, ForbiddenState } from '../../components/States';
-import { exportAuditPackage, listAudit } from '../../api/mockApi';
+import { exportAuditPackage, listAudit } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatDateTime } from '../../lib/date';
 import { maxBridge } from '../../bridge/maxBridge';

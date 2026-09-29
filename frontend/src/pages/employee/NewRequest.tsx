@@ -6,7 +6,7 @@ import { CalendarRange } from '../../components/CalendarRange';
 import { VerdictBanner } from '../../components/VerdictBanner';
 import { CheckRow } from '../../components/CheckRow';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
-import { getTeamCalendar, previewLeaveRequest, submitLeaveRequest } from '../../api/mockApi';
+import { getTeamCalendar, previewLeaveRequest, submitLeaveRequest } from '../../api/client';
 import { ApiError } from '../../api/errors';
 import { formatRu } from '../../lib/date';
 import { getRuleExplanation } from '../../lib/ruleExplanations';

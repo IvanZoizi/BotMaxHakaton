@@ -1,7 +1,7 @@
 import { ListHeader } from '../../components/Header';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { listAllDocumentsWithOwner } from '../../api/mockApi';
+import { listAllDocumentsWithOwner } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import styles from './ReviewQueue.module.css';
 

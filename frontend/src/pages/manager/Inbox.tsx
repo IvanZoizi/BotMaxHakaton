@@ -4,7 +4,7 @@ import { EmployeeRow } from '../../components/EmployeeRow';
 import { RequestStatusBadge } from '../../components/StatusBadge';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState, ForbiddenState } from '../../components/States';
-import { listLeaveRequests } from '../../api/mockApi';
+import { listLeaveRequests } from '../../api/client';
 import { EMPLOYEE_BALANCE_DAYS } from '../../api/fixtures';
 import { useAsync } from '../../lib/useAsync';
 import { formatRange } from '../../lib/date';

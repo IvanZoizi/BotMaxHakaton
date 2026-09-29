@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StepHeader } from '../../components/Header';
 import { Button } from '../../components/Button';
-import { getCompanySummary } from '../../api/mockApi';
+import { getCompanySummary } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import styles from './CompanyConnect.module.css';
 

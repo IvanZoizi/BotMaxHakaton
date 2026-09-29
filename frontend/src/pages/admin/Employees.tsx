@@ -2,7 +2,7 @@ import { ListHeader } from '../../components/Header';
 import { EmployeeRow } from '../../components/EmployeeRow';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { listEmployees } from '../../api/mockApi';
+import { listEmployees } from '../../api/client';
 import { EMPLOYEE_BALANCE_DAYS } from '../../api/fixtures';
 import { useAsync } from '../../lib/useAsync';
 import styles from './Employees.module.css';

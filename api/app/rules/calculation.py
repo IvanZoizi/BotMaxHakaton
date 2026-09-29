@@ -29,7 +29,7 @@ def calculate(employee: EmployeeContext, request: LeaveRequestContext) -> Calcul
     holidays = holidays_in_range(request.start_date, request.end_date)
     chargeable_days = max(calendar_days - len(holidays), 0)
     notify_by = request.start_date - timedelta(days=NOTICE_PERIOD_DAYS)
-    pay_by = request.start_date - timedelta(days=PAY_DEADLINE_DAYS)
+    pay_by = _shift_to_preceding_workday(request.start_date - timedelta(days=PAY_DEADLINE_DAYS))
     days_until_start = (request.start_date - request.as_of_today()).days
     balance_after = round(employee.leave_balance_days - chargeable_days, 2)
 
@@ -42,3 +42,14 @@ def calculate(employee: EmployeeContext, request: LeaveRequestContext) -> Calcul
         days_until_start=days_until_start,
         balance_after=balance_after,
     )
+
+
+def _shift_to_preceding_workday(day: date) -> date:
+    """Ст. 136 ТК РФ сама не оговаривает перенос при совпадении с выходным для
+    отпускных (в отличие от ч. 8 той же статьи — про обычную зарплату). Перенос
+    на предшествующий рабочий день — устойчивая практика (Письмо Роструда от
+    30.07.2014 N 1693-6-1: банк/бухгалтерия не проводят платежи в выходной),
+    не буква кодекса — помечено отдельно от messages в rules.yaml."""
+    while day.weekday() >= 5:  # 5=суббота, 6=воскресенье
+        day -= timedelta(days=1)
+    return day

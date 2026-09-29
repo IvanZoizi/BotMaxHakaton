@@ -4,10 +4,10 @@ import { DeadlineBadge } from '../../components/StatusBadge';
 import { Button } from '../../components/Button';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { listPaymentDeadlines, markPaid } from '../../api/mockApi';
+import { listPaymentDeadlines, markPaid } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { diffDays, formatRu } from '../../lib/date';
-import { DEMO_TODAY_ISO } from '../../api/mockApi';
+import { DEMO_TODAY_ISO } from '../../api/client';
 import styles from './Deadlines.module.css';
 
 function amountFor(chargeableDays: number) {

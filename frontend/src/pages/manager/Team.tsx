@@ -2,7 +2,7 @@ import { ListHeader } from '../../components/Header';
 import { EmployeeRow } from '../../components/EmployeeRow';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { getTeamCalendar, listLeaveRequests, DEMO_TODAY_ISO } from '../../api/mockApi';
+import { getTeamCalendar, listLeaveRequests, DEMO_TODAY_ISO } from '../../api/client';
 import { EMPLOYEES, EMPLOYEE_BALANCE_DAYS } from '../../api/fixtures';
 import { useAsync } from '../../lib/useAsync';
 import { formatRu } from '../../lib/date';

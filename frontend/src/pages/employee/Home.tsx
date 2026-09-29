@@ -6,7 +6,7 @@ import { BottomNav } from '../../components/BottomNav';
 import { DocumentCard } from '../../components/DocumentCard';
 import { SkeletonScreen, ErrorState, DemoDataBadge } from '../../components/States';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
-import { getMe, listLeaveRequests } from '../../api/mockApi';
+import { getMe, listLeaveRequests } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatRange, formatRu } from '../../lib/date';
 import styles from './Home.module.css';

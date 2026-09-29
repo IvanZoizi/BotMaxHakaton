@@ -25,23 +25,40 @@ services:
       AUTH_MODE: ${AUTH_MODE:-dev}
       BOT_TOKEN: ${BOT_TOKEN:-dev-bot-token}
       FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:-dev-file-secret}
+      BOT_BASE_URL: http://bot:8080
+      BOT_INTERNAL_NOTIFY_SECRET: ${BOT_INTERNAL_NOTIFY_SECRET:-dev-notify-secret}
+      REMINDER_SWEEP_INTERVAL_SECONDS: ${REMINDER_SWEEP_INTERVAL_SECONDS:-3600}
     volumes:
       - api_storage:/app/storage
     expose:
       - "8000"
 
-  nginx:
-    image: nginx:1.27-alpine
+  bot:
+    build: ./bot
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
+      API_BASE_URL: http://api:8000
+      API_AUTH_MODE: ${AUTH_MODE:-dev}
+      WEBHOOK_URL: ${BOT_WEBHOOK_URL:-}
+      WEBHOOK_SECRET: ${BOT_WEBHOOK_SECRET:-}
+      INTERNAL_NOTIFY_SECRET: ${BOT_INTERNAL_NOTIFY_SECRET:-dev-notify-secret}
+      MINIAPP_URL: ${MINIAPP_URL:-https://smena.example.com}
+    expose:
+      - "8080"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+      - bot
     ports:
       - "80:80"
-    volumes:
-      - ./nginx.config:/etc/nginx/conf.d/default.conf:ro
-
-# Бот (maxapi) добавится сюда отдельным сервисом после того, как будет готова
-# его схема — сейчас в docker-compose участвуют только postgres/api/nginx.
 
 volumes:
   postgres_data:

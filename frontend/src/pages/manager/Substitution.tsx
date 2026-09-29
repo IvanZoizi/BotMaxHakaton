@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/Button';
 import { CandidateSwipeCard } from '../../components/CandidateSwipeCard';
 import { EmptyState, ErrorState, ForbiddenState, SkeletonScreen } from '../../components/States';
-import { createShiftOffer, getShiftContext, listShiftCandidates } from '../../api/mockApi';
+import { createShiftOffer, getShiftContext, listShiftCandidates } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatRange } from '../../lib/date';
 import { surnameWithInitials } from '../../lib/formatName';

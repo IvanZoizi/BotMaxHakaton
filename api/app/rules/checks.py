@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Callable
 
 from .calculation import Calculation
@@ -8,12 +9,41 @@ from .context import EmployeeContext, LeaveRequestContext
 from .models import Rule
 
 PRIVILEGED_CATEGORIES: dict[str, str] = {
-    "multiple_children": "многодетный родитель — ст. 262.2 ТК РФ",
+    # многодетный — до достижения МЛАДШИМ из детей 14 лет (ст. 262.2 ТК РФ,
+    # ред. от 20.03.2021); сам возраст младшего ребёнка в EmployeeContext не
+    # хранится, поэтому условие — часть текста сообщения, не отдельная проверка.
+    "multiple_children": "многодетный родитель (до достижения младшим ребёнком 14 лет) — ст. 262.2 ТК РФ",
     "minor": "работник младше 18 лет — ст. 267 ТК РФ",
     "donor": "почётный донор — ст. 262.2 ТК РФ",
     "chernobyl": "лицо, пострадавшее вследствие радиационных аварий — ст. 262.2 ТК РФ",
     "spouse_of_military": "супруг(а) военнослужащего — ст. 262.2 ТК РФ",
 }
+
+# ст. 122 ч. 3 ТК РФ: этим категориям отпуск в первый год предоставляется до
+# истечения шести месяцев работы по их заявлению, ждать общего срока не нужно.
+EARLY_LEAVE_EXEMPT_CATEGORIES = {"minor", "pregnant_or_postnatal", "adopted_infant"}
+
+# Базовая продолжительность отпуска длиннее стандартных 28 дней — не проверка
+# дат, а информация для сверки leave_balance_days (откуда он взят — вне
+# движка, при найме/онбординге).
+EXTENDED_BASE_DURATION: dict[str, tuple[int, str]] = {
+    "disabled": (30, "ст. 115 ТК РФ (в ред. Федерального закона от 08.08.2024 N 268-ФЗ)"),
+    "minor": (31, "ст. 267 ТК РФ"),
+}
+
+
+def _add_months(base: date, months: int) -> date:
+    month_index = base.month - 1 + months
+    year = base.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(base.day, _days_in_month(year, month))
+    return date(year, month, day)
+
+
+def _days_in_month(year: int, month: int) -> int:
+    if month == 12:
+        return (date(year + 1, 1, 1) - date(year, 12, 1)).days
+    return (date(year, month + 1, 1) - date(year, month, 1)).days
 
 
 @dataclass(frozen=True)
@@ -119,3 +149,23 @@ def check_team_overlap(rule, employee, request, calc):
 @register("schedule_t7_match")
 def check_schedule_t7_match(rule, employee, request, calc):
     return None  # график Т-7 вне MVP (README, раздел 16, п.4) — источника данных для сверки ещё нет
+
+
+@register("first_year_six_months")
+def check_first_year_six_months(rule, employee, request, calc):
+    if employee.category in EARLY_LEAVE_EXEMPT_CATEGORIES:
+        return None  # ст. 122 ч. 3 ТК РФ — ждать общего срока не обязаны, проверка неприменима
+    eligible_from = _add_months(employee.hire_date, 6)
+    passed = request.start_date >= eligible_from
+    template = rule.messages.pass_ if passed else rule.messages.fail
+    message = template.format(eligible_from=eligible_from.isoformat())
+    return CheckOutcome(passed=passed, message=message)
+
+
+@register("extended_base_duration")
+def check_extended_base_duration(rule, employee, request, calc):
+    if employee.category not in EXTENDED_BASE_DURATION:
+        return None  # обычная продолжительность — 28 дней, уточнять нечего
+    days, norm_title = EXTENDED_BASE_DURATION[employee.category]
+    message = rule.messages.pass_.format(days=days, norm_title=norm_title)
+    return CheckOutcome(passed=True, message=message)

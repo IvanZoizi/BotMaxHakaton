@@ -1,6 +1,6 @@
 import { Header } from '../../components/Header';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { listRules } from '../../api/mockApi';
+import { listRules } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { isoDate } from '../../lib/date';
 import styles from './SettingsRules.module.css';

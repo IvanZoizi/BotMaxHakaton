@@ -7,7 +7,7 @@ import { VerdictBanner } from '../../components/VerdictBanner';
 import { CheckRow } from '../../components/CheckRow';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
 import { SkeletonScreen, ErrorState, ForbiddenState } from '../../components/States';
-import { approveLeaveRequest, getLeaveRequest, rejectLeaveRequest } from '../../api/mockApi';
+import { approveLeaveRequest, getLeaveRequest, rejectLeaveRequest } from '../../api/client';
 import { ApiError } from '../../api/errors';
 import { useAsync } from '../../lib/useAsync';
 import { formatRu, formatRange, addDays, formatDateTime } from '../../lib/date';

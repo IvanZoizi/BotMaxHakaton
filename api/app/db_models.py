@@ -33,6 +33,10 @@ class Employee(Base):
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"))
     location_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("locations.id"))
     max_user_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    # Персональный код из ссылки руководителя (README/бот: join_<code>) —
+    # присваивается при создании, гасится (→ None) при первой успешной
+    # привязке max_user_id, чтобы ссылку нельзя было переиспользовать.
+    invite_code: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String)
     position: Mapped[str] = mapped_column(String)
     roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
@@ -73,6 +77,13 @@ class LeaveRequest(Base):
     alternative_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     replaces_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Метки "уже отправлено" для напоминаний планировщика (README §9 №13) —
+    # без них при каждом проходе шедулера напоминание уходило бы повторно.
+    # NULL = ещё не отправлено; дальше — просто timestamp отправки.
+    employee_reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    accountant_reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    manager_escalation_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     employee: Mapped["Employee"] = relationship()
     documents: Mapped[list["Document"]] = relationship(order_by="Document.issued_at")

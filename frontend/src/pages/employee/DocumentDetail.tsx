@@ -4,7 +4,7 @@ import { Button } from '../../components/Button';
 import { SignatureStamp } from '../../components/DocumentCard';
 import { DocumentStatusBadge } from '../../components/StatusBadge';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { getDocument } from '../../api/mockApi';
+import { getDocument } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { formatDateTime } from '../../lib/date';
 import { maxBridge } from '../../bridge/maxBridge';

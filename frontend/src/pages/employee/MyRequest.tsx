@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { RequestStatusBadge } from '../../components/StatusBadge';
 import { DocumentCard } from '../../components/DocumentCard';
 import { SkeletonScreen, ErrorState, ForbiddenState } from '../../components/States';
-import { getLeaveRequest, cancelLeaveRequest } from '../../api/mockApi';
+import { getLeaveRequest, cancelLeaveRequest } from '../../api/client';
 import { ApiError } from '../../api/errors';
 import { useAsync } from '../../lib/useAsync';
 import { formatRange, formatRuDateTimeLong } from '../../lib/date';

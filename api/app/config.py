@@ -15,5 +15,15 @@ class Settings(BaseSettings):
     file_url_ttl_seconds: int = 600
     file_signing_secret: str = "dev-file-secret"
 
+    # Уведомления — api зовёт bot/app/notify.py (см. notify_client.py).
+    # Пусто = уведомления просто пропускаются с предупреждением в лог,
+    # чтобы локальная разработка без бота не ломалась.
+    bot_base_url: str = ""
+    bot_internal_notify_secret: str = "dev-notify-secret"
+    # Как часто гонять scheduler.run_reminder_sweep (секунды). Раз в час
+    # достаточно для реальных суточных дедлайнов; для демонстрации/проверки
+    # можно поставить меньше через .env.
+    reminder_sweep_interval_seconds: int = 3600
+
 
 settings = Settings()

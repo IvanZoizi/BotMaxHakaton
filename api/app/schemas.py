@@ -66,6 +66,35 @@ class Employee(CamelModel):
     location_name: str | None = None
 
 
+class CreateEmployeeRequest(CamelModel):
+    """Не входит в 16 путей openapi.yaml — контракт прямо оставляет
+    подключение сотрудника «вне API, бот-логика» (§2, сценарий 1). Решение
+    команды: руководитель создаёт запись и получает персональную ссылку
+    (join_<inviteCode>), сотрудник переходит по ней и привязывается —
+    см. POST /employees/link."""
+
+    full_name: str
+    position: str
+    role: Role = Role.EMPLOYEE
+
+
+class CreatedEmployee(CamelModel):
+    id: uuid.UUID
+    full_name: str
+    position: str
+    roles: list[Role]
+    invite_code: str
+
+
+class LinkEmployeeRequest(CamelModel):
+    """Без аутентификации — на этом шаге вызывающий ещё не привязан ни к
+    какому сотруднику. inviteCode сам по себе — секрет, дающий право на
+    привязку (модель "код из персональной ссылки = достаточное основание")."""
+
+    invite_code: str
+    max_user_id: str
+
+
 class LeaveRequestStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"

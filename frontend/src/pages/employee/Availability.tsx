@@ -4,7 +4,7 @@ import { ListHeader } from '../../components/Header';
 import { Button } from '../../components/Button';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { getMyAvailability, setMyAvailability } from '../../api/mockApi';
+import { getMyAvailability, setMyAvailability } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import type { AvailabilityWindow, Weekday } from '../../api/types';
 import styles from './Availability.module.css';

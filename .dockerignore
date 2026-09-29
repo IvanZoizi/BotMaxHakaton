@@ -1,0 +1,15 @@
+.git
+.idea
+README.md
+СМЕНА — API-контракт и OpenAPI.md
+
+api/.venv
+api/.pytest_cache
+api/storage
+api/__pycache__
+
+frontend/node_modules
+frontend/dist
+frontend/.claude
+
+bot
