@@ -23,4 +23,4 @@ async def on_accept(event: MessageCallback, payload: AcceptShiftOfferPayload) ->
         await event.answer(notification=f"Не удалось принять: {exc.message}")
         return
 
-    await event.edit(text="Вы вышли на смену. Спасибо!", attachments=[])
+    await event.edit(text="✅ Вы вышли на смену. Спасибо!", attachments=[])

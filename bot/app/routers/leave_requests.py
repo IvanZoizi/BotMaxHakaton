@@ -21,7 +21,7 @@ leave_requests_router = Router(router_id="leave_requests")
 async def on_reject_prompt(event: MessageCallback, payload: RejectLeaveRequestPromptPayload) -> None:
     logger.info("Запрошена причина отказа для заявки %s", payload.request_id)
     await event.edit(
-        text="Укажите причину отказа:",
+        text="Причина отказа:",
         attachments=reject_reason_keyboard(payload.request_id),
     )
 

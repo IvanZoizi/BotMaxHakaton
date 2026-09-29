@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from .bot_instance import bot
 from .config import settings
-from .keyboards import approval_card_keyboard, shift_offer_keyboard
+from .keyboards import REJECT_REASON_LABELS, approval_card_keyboard, shift_offer_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +133,9 @@ async def notify_leave_request_submitted(
 
     location = f" · {payload.location_name}" if payload.location_name else ""
     text = (
-        "Заявка на отпуск\n"
+        "🗓 Новая заявка на отпуск\n"
         f"{payload.employee_full_name} · {payload.employee_position}{location}\n"
-        f"{payload.start_date} — {payload.end_date}, {payload.calendar_days} дней\n"
+        f"{payload.start_date} — {payload.end_date} ({payload.calendar_days} дн.)\n"
         f"Отпускные выплатить до {payload.pay_deadline}"
     )
 
@@ -156,10 +156,15 @@ async def notify_leave_request_decided(
     logger.info("Уведомление: решение по заявке %s -> сотруднику %s (%s)", payload.request_id, payload.employee_user_id, payload.status)
 
     if payload.status == "approved":
-        text = f"✅ Заявка на отпуск {payload.start_date} — {payload.end_date} согласована."
+        text = f"✅ Отпуск {payload.start_date} — {payload.end_date} согласован."
     else:
-        reason = f"\nПричина: {payload.reject_reason}" if payload.reject_reason else ""
-        text = f"❌ Заявка на отпуск {payload.start_date} — {payload.end_date} отклонена.{reason}"
+        # reject_reason — код ("high_load") для предустановленных причин или
+        # уже готовый текст для "другое" (см. api/app/routers/leave_requests.py
+        # reject_leave_request: reason_text or reason_code.value). Раньше сюда
+        # всегда попадал сырой код без перевода.
+        reason_label = REJECT_REASON_LABELS.get(payload.reject_reason or "", payload.reject_reason)
+        reason = f"\nПричина: {reason_label}" if reason_label else ""
+        text = f"❌ Отпуск {payload.start_date} — {payload.end_date} отклонён.{reason}"
 
     await bot.send_message(user_id=payload.employee_user_id, text=text)
     return {"status": "sent"}
@@ -173,10 +178,7 @@ async def notify_leave_request_cancelled(
     _check_secret(x_internal_secret)
     logger.info("Уведомление: отзыв заявки %s -> руководителю %s", payload.request_id, payload.manager_user_id)
 
-    text = (
-        f"↩️ {payload.employee_full_name} отозвал(а) согласованный отпуск "
-        f"{payload.start_date} — {payload.end_date}."
-    )
+    text = f"↩️ {payload.employee_full_name} отозвал(а) отпуск {payload.start_date} — {payload.end_date}."
     await bot.send_message(user_id=payload.manager_user_id, text=text)
     return {"status": "sent"}
 
@@ -189,7 +191,7 @@ async def notify_shift_offer_declined(
     _check_secret(x_internal_secret)
     logger.info("Уведомление: отказ от предложения %s -> руководителю %s", payload.offer_id, payload.manager_user_id)
 
-    text = f"{payload.candidate_full_name} не сможет выйти на предложенную смену. Подберите другого кандидата."
+    text = f"⚠️ {payload.candidate_full_name} не сможет выйти на смену. Подберите другого кандидата."
     await bot.send_message(user_id=payload.manager_user_id, text=text)
     return {"status": "sent"}
 
@@ -202,7 +204,7 @@ async def notify_employee_leave_reminder(
     _check_secret(x_internal_secret)
     logger.info("Уведомление: напоминание об отпуске %s -> сотруднику %s", payload.request_id, payload.employee_user_id)
 
-    text = f"Напоминаем: ваш отпуск {payload.start_date} — {payload.end_date} уже скоро."
+    text = f"⏰ Скоро отпуск: {payload.start_date} — {payload.end_date}."
     await bot.send_message(user_id=payload.employee_user_id, text=text)
     return {"status": "sent"}
 
@@ -215,7 +217,7 @@ async def notify_accountant_pay_reminder(
     _check_secret(x_internal_secret)
     logger.info("Уведомление: напоминание о выплате по заявке %s -> бухгалтеру %s", payload.request_id, payload.accountant_user_id)
 
-    text = f"Отпускные для {payload.employee_full_name} выплатить не позднее {payload.pay_deadline}."
+    text = f"💰 Отпускные для {payload.employee_full_name} — выплатить не позднее {payload.pay_deadline}."
     await bot.send_message(user_id=payload.accountant_user_id, text=text)
     return {"status": "sent"}
 
@@ -229,8 +231,8 @@ async def notify_manager_escalation(
     logger.info("Уведомление: эскалация по заявке %s -> руководителю %s", payload.request_id, payload.manager_user_id)
 
     text = (
-        f"⚠ Заявка {payload.employee_full_name} ещё не решена, а известить сотрудника "
-        f"нужно до {payload.notify_deadline} (ст. 123 ТК РФ). Решите как можно скорее."
+        f"⚠️ Заявка {payload.employee_full_name} всё ещё без решения, а известить "
+        f"сотрудника нужно до {payload.notify_deadline} (ст. 123 ТК РФ). Решите как можно скорее."
     )
     await bot.send_message(user_id=payload.manager_user_id, text=text)
     return {"status": "sent"}
@@ -244,7 +246,7 @@ async def notify_employee_welcome_back(
     _check_secret(x_internal_secret)
     logger.info("Уведомление: возвращение из отпуска по заявке %s -> сотруднику %s", payload.request_id, payload.employee_user_id)
 
-    await bot.send_message(user_id=payload.employee_user_id, text="С возвращением из отпуска! 👋")
+    await bot.send_message(user_id=payload.employee_user_id, text="👋 С возвращением! Хорошей смены.")
     return {"status": "sent"}
 
 
@@ -262,7 +264,7 @@ async def notify_shift_offer_proposed(
 
     location = f" в {payload.location_name}" if payload.location_name else ""
     reasons = "\n".join(f"· {r}" for r in payload.reasons)
-    text = f"Есть открытая смена{location} (score {payload.score})\n{reasons}".strip()
+    text = f"💼 Есть подработка{location}\n{reasons}".strip()
 
     await bot.send_message(
         user_id=payload.candidate_user_id,

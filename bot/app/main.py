@@ -64,7 +64,7 @@ def build_app() -> FastAPI:
         await close_session()
         logger.info("Сессия к backend API закрыта")
 
-    app = FastAPI(title="СМЕНА Bot", lifespan=lifespan)
+    app = FastAPI(title="EVA Bot", lifespan=lifespan)
     webhook.setup(app, path=settings.webhook_path)
     app.include_router(notify_router)
 

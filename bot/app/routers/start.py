@@ -16,14 +16,11 @@ logger = logging.getLogger(__name__)
 start_router = Router(router_id="start")
 
 WELCOME_TEXT = (
-    "Привет! Это бот «Смена» — отпуска и подмены прямо в MAX.\n"
-    "Откройте приложение, чтобы оформить отпуск или посмотреть заявки."
+    "👋 Привет! Я EVA — бизнес-консультант по отпускам и подменам в MAX.\n"
+    "Открою приложение — там оформите отпуск и увидите свои заявки."
 )
 
-NOT_LINKED_TEXT = (
-    "Вы ещё не подключены к компании как сотрудник. "
-    "Обратитесь к своему руководителю или администратору."
-)
+NOT_LINKED_TEXT = "Вы пока не подключены как сотрудник — попросите ссылку у руководителя."
 
 
 async def _handle_entry(*, chat_id: int, max_user_id: str, payload: str | None) -> None:
@@ -54,11 +51,11 @@ async def _link_employee(*, chat_id: int, max_user_id: str, invite_code: str) ->
     except ApiError as exc:
         logger.warning("Не удалось привязать сотрудника (код %s): %s", invite_code, exc)
         if exc.code == "NOT_FOUND":
-            text = "Код приглашения не найден. Проверьте ссылку или обратитесь к руководителю."
+            text = "Код приглашения не найден. Уточните ссылку у руководителя."
         elif exc.code == "ALREADY_RESOLVED":
-            text = "Эта ссылка уже использована. Обратитесь к руководителю за новой."
+            text = "Эта ссылка уже использована — попросите у руководителя новую."
         elif exc.code == "CONFLICT":
-            text = "Этот профиль MAX уже привязан к другому сотруднику."
+            text = "Этот аккаунт MAX уже привязан к другому сотруднику."
         else:
             text = f"Не удалось подключиться: {exc.message}"
         await bot.send_message(chat_id=chat_id, text=text)
@@ -67,7 +64,7 @@ async def _link_employee(*, chat_id: int, max_user_id: str, invite_code: str) ->
     logger.info("Сотрудник привязан: max_user_id=%s -> %s", max_user_id, me.get("id"))
     await bot.send_message(
         chat_id=chat_id,
-        text=f"Готово! Вы подключены как {me.get('fullName')} ({me.get('position')}).",
+        text=f"✅ Готово! Вы подключены как {me.get('fullName')} ({me.get('position')}).",
         attachments=open_miniapp_keyboard(),
     )
 
@@ -82,7 +79,7 @@ async def _send_shift_offer(*, chat_id: int, offer_id: str, max_user_id: str) ->
         return
 
     reasons = "\n".join(f"· {r}" for r in offer.get("reasons", []))
-    text = f"Предложение подработки (score {offer.get('score')})\n{reasons}".strip()
+    text = f"💼 Есть подработка\n{reasons}".strip()
     await bot.send_message(chat_id=chat_id, text=text, attachments=shift_offer_keyboard(offer_id))
 
 

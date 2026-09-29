@@ -31,7 +31,7 @@ async def on_collect_schedule(event: MessageCreated) -> None:
     max_user_id = str(user.user_id)
     year = _parse_year(event.message.body.text if event.message.body else None)
     if year is None:
-        await event.message.answer("Использование: /collect_schedule 2027")
+        await event.message.answer("Формат: /collect_schedule 2027")
         return
 
     try:
@@ -52,7 +52,7 @@ async def on_collect_schedule(event: MessageCreated) -> None:
             continue  # ещё не привязан к MAX — пригласить некуда
         await bot.send_message(
             user_id=emp_user_id,
-            text=f"Руководитель собирает график отпусков на {year} год. Укажите желаемые даты.",
+            text=f"📅 Собираем график отпусков на {year} год — укажите желаемые даты.",
             attachments=open_miniapp_keyboard(
                 "Указать даты", payload=build_schedule_t7_payload(year)
             ),
@@ -61,10 +61,7 @@ async def on_collect_schedule(event: MessageCreated) -> None:
 
     await bot.send_message(
         user_id=int(max_user_id),
-        text=(
-            f"Приглашение на {year} год отправлено {sent} сотрудникам. "
-            f"Смотрите ответы и утверждайте график здесь же."
-        ),
+        text=f"Приглашение на {year} год получили {sent} сотрудников. Ответы и утверждение — здесь же.",
         attachments=open_miniapp_keyboard("Смотреть ответы", payload=build_schedule_t7_payload(year)),
     )
 
@@ -77,7 +74,7 @@ async def on_approve_schedule(event: MessageCreated) -> None:
     max_user_id = str(user.user_id)
     year = _parse_year(event.message.body.text if event.message.body else None)
     if year is None:
-        await event.message.answer("Использование: /approve_schedule 2027")
+        await event.message.answer("Формат: /approve_schedule 2027")
         return
 
     try:
@@ -88,7 +85,7 @@ async def on_approve_schedule(event: MessageCreated) -> None:
         return
 
     conflicts = [e for e in entries if e.get("conflictsWith")]
-    text = f"График на {year} год утверждён: {len(entries)} записей."
+    text = f"✅ График на {year} год утверждён — {len(entries)} записей."
     if conflicts:
-        text += f"\n⚠ Пересечения по датам: {len(conflicts)} сотрудников — проверьте в мини-аппе."
+        text += f"\n⚠️ Пересечения дат у {len(conflicts)} сотрудников — проверьте в приложении."
     await event.message.answer(text)

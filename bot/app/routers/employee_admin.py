@@ -17,10 +17,10 @@ employee_admin_router = Router(router_id="employee_admin")
 VALID_ROLES = {"employee", "manager", "accountant", "admin"}
 
 USAGE_TEXT = (
-    "Использование: /add_employee Фамилия Имя; Должность; роль\n"
-    "Роль необязательна, по умолчанию employee. Доступные роли: "
-    "employee, manager, accountant, admin.\n\n"
-    "Пример: /add_employee Кузнецов Артём; Продавец-кассир"
+    "Формат: /add_employee Фамилия Имя; Должность; роль\n"
+    "Роль можно не указывать — по умолчанию employee "
+    "(ещё бывают manager, accountant, admin).\n\n"
+    "Например: /add_employee Кузнецов Артём; Продавец-кассир"
 )
 
 
@@ -45,7 +45,7 @@ async def on_add_employee(event: MessageCreated) -> None:
     full_name, position = parts[0], parts[1]
     role = parts[2] if len(parts) > 2 and parts[2] else "employee"
     if role not in VALID_ROLES:
-        await event.message.answer(f"Неизвестная роль «{role}». Доступные: {', '.join(sorted(VALID_ROLES))}")
+        await event.message.answer(f"Такой роли нет: «{role}». Доступны: {', '.join(sorted(VALID_ROLES))}")
         return
 
     max_user_id = str(user.user_id)
@@ -77,6 +77,6 @@ async def on_add_employee(event: MessageCreated) -> None:
         link = f"не удалось сформировать ссылку — передайте код вручную: {payload}"
 
     await event.message.answer(
-        f"Сотрудник «{full_name}» добавлен ({position}, роль: {role}).\n"
-        f"Отправьте ему личную ссылку для подключения — она одноразовая:\n{link}"
+        f"✅ {full_name} добавлен(а) — {position}.\n"
+        f"Перешлите одноразовую ссылку, чтобы подключить:\n{link}"
     )
