@@ -47,7 +47,9 @@ export default function DocumentDetail() {
           <p className={styles.number}>{doc.number}</p>
           <DocumentStatusBadge status={doc.status} />
         </div>
-        <div className={styles.pdfPreview}>PDF preview</div>
+        <div className={styles.pdfPreview}>
+          <iframe src={doc.pdfUrl} title={doc.number} className={styles.pdfFrame} />
+        </div>
 
         {doc.integrityVerified && (
           <p className={styles.integrity}>✓ Документ не изменялся после подписания</p>
@@ -74,7 +76,7 @@ export default function DocumentDetail() {
         <Button onClick={() => maxBridge.downloadFile(doc.pdfUrl, `${doc.number}.pdf`)}>Скачать</Button>
         <Button
           variant="text"
-          onClick={() => maxBridge.shareMaxContent({ title: doc.number, url: doc.pdfUrl })}
+          onClick={() => maxBridge.shareMaxContent({ text: doc.number, link: doc.pdfUrl })}
         >
           Отправить в чат
         </Button>

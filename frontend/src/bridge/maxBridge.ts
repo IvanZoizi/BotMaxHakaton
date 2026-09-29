@@ -12,10 +12,14 @@ export type MaxPlatform = 'ios' | 'android' | 'desktop' | 'web';
 
 export type BiometricAuthResult = { status: 'success' } | { status: 'cancelled' } | { status: 'fallback' };
 
+/** Реальная сигнатура WebApp.shareMaxContent/shareContent (dev.max.ru/docs/webapps/bridge) —
+ * ровно text/link, один из двух обязателен; полей title/url в бридже нет.
+ * Второй режим shareMaxContent (пересылка уже отправленного ботом сообщения
+ * как вложения: { mid, chatType }) здесь не используется — требует, чтобы
+ * бот сначала сам отправил документ через Bot API POST /messages. */
 interface ShareMaxContentParams {
-  title?: string;
   text?: string;
-  url?: string;
+  link?: string;
 }
 
 interface HapticFeedback {
