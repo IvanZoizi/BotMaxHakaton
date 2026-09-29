@@ -26,6 +26,15 @@ def open_miniapp_button(text: str = "Открыть приложение", paylo
     return LinkButton(text=text, url=settings.miniapp_url)
 
 
+def open_miniapp_keyboard(text: str = "Открыть приложение", payload: str | None = None) -> list:
+    """Кнопка мини-аппа, отправленная сама по себе (не в карточке с другими
+    кнопками) — attachments ждёт inline_keyboard-обёртку, а не голую кнопку,
+    иначе MAX API отвечает 400 proto.payload "Can't deserialize body"."""
+    kb = InlineKeyboardBuilder()
+    kb.row(open_miniapp_button(text, payload=payload))
+    return [kb.as_markup()]
+
+
 def approval_card_keyboard(request_id: str) -> list:
     """Диаграмма онбординга/раздел 3: «Согласовать» ведёт в мини-апп на
     биометрическое подтверждение — BiometricManager доступен только там, не

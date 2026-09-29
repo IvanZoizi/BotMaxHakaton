@@ -10,7 +10,7 @@ from maxapi.types.updates.message_created import MessageCreated
 from ..api_client import ApiError, get_shift_offer, link_employee
 from ..bot_instance import bot
 from ..deeplinks import JoinDeepLink, ShiftOfferDeepLink, parse_deep_link
-from ..keyboards import open_miniapp_button, shift_offer_keyboard
+from ..keyboards import open_miniapp_keyboard, shift_offer_keyboard
 
 logger = logging.getLogger(__name__)
 start_router = Router(router_id="start")
@@ -34,7 +34,7 @@ async def _handle_entry(*, chat_id: int, max_user_id: str, payload: str | None) 
     logger.info("Вход в бота: chat_id=%s max_user_id=%s deep_link=%r", chat_id, max_user_id, link)
 
     if link is None:
-        await bot.send_message(chat_id=chat_id, text=WELCOME_TEXT, attachments=[open_miniapp_button()])
+        await bot.send_message(chat_id=chat_id, text=WELCOME_TEXT, attachments=open_miniapp_keyboard())
         return
 
     if isinstance(link, JoinDeepLink):
@@ -68,7 +68,7 @@ async def _link_employee(*, chat_id: int, max_user_id: str, invite_code: str) ->
     await bot.send_message(
         chat_id=chat_id,
         text=f"Готово! Вы подключены как {me.get('fullName')} ({me.get('position')}).",
-        attachments=[open_miniapp_button()],
+        attachments=open_miniapp_keyboard(),
     )
 
 
@@ -96,7 +96,7 @@ async def on_started_with_payload(event: BotStarted) -> None:
 async def on_started_plain(event: BotStarted) -> None:
     """Первый запуск без deep link — обычное нажатие «Начать»."""
     logger.info("Первый запуск бота: chat_id=%s user_id=%s", event.chat_id, event.user.user_id)
-    await bot.send_message(chat_id=event.chat_id, text=WELCOME_TEXT, attachments=[open_miniapp_button()])
+    await bot.send_message(chat_id=event.chat_id, text=WELCOME_TEXT, attachments=open_miniapp_keyboard())
 
 
 @start_router.message_created(CommandStart())
