@@ -406,6 +406,11 @@ class AuditEntry(CamelModel):
     prev_hash: str | None = None
 
 
+class AuditExport(CamelModel):
+    url: str
+    filename: str
+
+
 class ErrorCode(str, Enum):
     NOT_LINKED = "NOT_LINKED"
     FORBIDDEN = "FORBIDDEN"

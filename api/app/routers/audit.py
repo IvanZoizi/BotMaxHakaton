@@ -5,16 +5,17 @@ import uuid
 import zipfile
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_employee
+from ..config import settings
 from ..db import get_db
 from ..db_models import AuditLog, Employee, LeaveRequest
 from ..errors import forbidden
-from ..schemas import AuditEntry
+from ..files import build_export_url
+from ..schemas import AuditEntry, AuditExport
 
 router = APIRouter(tags=["Audit"])
 
@@ -71,15 +72,23 @@ def list_audit(
     ]
 
 
-@router.get("/audit/export")
+@router.get("/audit/export", response_model=AuditExport)
 def export_audit_package(
+    request: Request,
     from_: date = Query(..., alias="from"),
     to: date = Query(...),
     employee: Employee = Depends(get_current_employee),
     db: Session = Depends(get_db),
-) -> StreamingResponse:
+) -> AuditExport:
     """«Собрать папку к проверке» (README §7 шаг 5, УI MD раздел 6): PDF документов,
-    журнал в CSV, сводка по каждому отпуску за период — в один ZIP."""
+    журнал в CSV, сводка по каждому отпуску за период — в один ZIP.
+
+    Раньше отдавали ZIP прямо в теле ответа, а фронтенд сам оборачивал его в
+    blob:-ссылку (URL.createObjectURL) — она существует только в памяти
+    текущего веб-вью, и реальный WebApp.downloadFile() в MAX не может её
+    получить (отдаёт URL нативному загрузчику вне веб-вью). Поэтому сохраняем
+    ZIP на диск и отдаём подписанную ссылку — тот же приём, что и для PDF
+    документов (см. files.py build_pdf_url/build_export_url)."""
     _require_audit_access(employee)
 
     requests_in_range = db.execute(
@@ -112,6 +121,11 @@ def export_audit_package(
                     archive.write(document.storage_path, arcname=f"documents/{document.number}.pdf")
         archive.writestr("summary.txt", "\n".join(summary_lines))
 
-    buffer.seek(0)
-    headers = {"Content-Disposition": f'attachment; filename="audit-{from_}-{to}.zip"'}
-    return StreamingResponse(buffer, media_type="application/zip", headers=headers)
+    settings.files_dir.mkdir(parents=True, exist_ok=True)
+    export_id = str(uuid.uuid4())
+    export_path = settings.files_dir / f"{export_id}.zip"
+    export_path.write_bytes(buffer.getvalue())
+
+    base_url = str(request.base_url).rstrip("/")
+    filename = f"audit-{from_}-{to}.zip"
+    return AuditExport(url=build_export_url(base_url, export_id, filename), filename=filename)

@@ -264,23 +264,8 @@ export const listAudit = (params: { requestId?: string; employeeId?: string; fro
 };
 
 // ---- GET /audit/export -----------------------------------------------------------
-export async function exportAuditPackage(from: string, to: string): Promise<{ url: string; filename: string }> {
-  if (!getPersona().isLinked) throw notLinked();
-  const headers = new Headers({
-    'X-Debug-Employee-Id': debugEmployeeId(),
-    'X-Max-Init-Data': maxBridge.initData,
-  });
-  const response = await fetch(`${API_BASE}/audit/export?from=${from}&to=${to}`, { headers });
-  if (!response.ok) {
-    const body = (await response.json().catch(() => undefined)) as ErrorResponseBody | undefined;
-    const err = body?.error;
-    throw new ApiError(
-      err?.code ?? 'VALIDATION_ERROR',
-      err?.message ?? 'Не удалось собрать папку к проверке',
-      response.status,
-      err?.details ?? [],
-    );
-  }
-  const blob = await response.blob();
-  return { url: URL.createObjectURL(blob), filename: `audit-${from}-${to}.zip` };
-}
+// Бэкенд отдаёт не сам ZIP, а подписанную ссылку на него (api/app/routers/audit.py) —
+// тот же приём, что и для PDF документов: реальному WebApp.downloadFile() в MAX
+// нужен обычный https-URL, а не blob:-ссылка, живущая только в памяти этого веб-вью.
+export const exportAuditPackage = (from: string, to: string) =>
+  request<{ url: string; filename: string }>(`/audit/export?from=${from}&to=${to}`);

@@ -1,6 +1,8 @@
 .bar {
   position: fixed;
-  bottom: 8px;
+  /* Экраны с ролью показывают ещё и BottomNav (~56px, sticky к низу) — на
+     фиксированные 8px эта плашка садилась прямо поверх его кнопок. */
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;

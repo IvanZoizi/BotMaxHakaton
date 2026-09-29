@@ -61,10 +61,20 @@ async def on_add_employee(event: MessageCreated) -> None:
     invite_code = created["inviteCode"]
     payload = build_join_payload(invite_code)
     username = bot.me.username if bot.me else None
+    if not username:
+        # bot.me обычно уже заполнен check_me() при старте (см. bot_instance.py),
+        # но полагаться на это и молча слать нерабочий плейсхолдер вместо
+        # ссылки — хуже, чем лишний вызов get_me(): без реального username
+        # create_start_link выдать ссылку не может в принципе.
+        try:
+            username = (await bot.get_me()).username
+        except Exception:
+            logger.exception("Не удалось получить username бота для ссылки-приглашения")
+
     if username:
         link = create_start_link(username=username, payload=payload, encode=False)
     else:
-        link = f"<ссылка на бота>?start={payload}"
+        link = f"не удалось сформировать ссылку — передайте код вручную: {payload}"
 
     await event.message.answer(
         f"Сотрудник «{full_name}» добавлен ({position}, роль: {role}).\n"
