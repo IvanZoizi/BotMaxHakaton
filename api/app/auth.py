@@ -61,8 +61,30 @@ def _verify_init_data(init_data: str) -> str:
 def get_current_employee(
     x_max_init_data: str | None = Header(default=None, alias="X-Max-Init-Data"),
     x_debug_employee_id: str | None = Header(default=None, alias="X-Debug-Employee-Id"),
+    x_internal_secret: str | None = Header(default=None, alias="X-Internal-Secret"),
     db: Session = Depends(get_db),
 ) -> Employee:
+    # Бот всегда действует от имени конкретного MAX-пользователя (согласование,
+    # /add_employee, приём смены), но предъявить X-Max-Init-Data не может —
+    # это концепция MAX Bridge мини-аппа, у бота её попросту нет. Раньше
+    # единственным способом было то же X-Debug-Employee-Id, что и dev-режим
+    # мини-аппа, — из-за этого переключение AUTH_MODE в prod (нужное, чтобы
+    # реальные мини-апп-запросы не обходили проверку подписи) заодно сломало
+    # вообще все действия бота. Общий секрет — тот же, что уже используется
+    # для api -> bot уведомлений (BOT_INTERNAL_NOTIFY_SECRET) — даёт боту
+    # доверенный канал, не зависящий от AUTH_MODE.
+    if (
+        x_debug_employee_id
+        and x_internal_secret
+        and hmac.compare_digest(x_internal_secret, settings.bot_internal_notify_secret)
+    ):
+        employee = db.execute(
+            select(Employee).where(Employee.max_user_id == x_debug_employee_id)
+        ).scalar_one_or_none()
+        if employee is None:
+            raise not_linked()
+        return employee
+
     if settings.auth_mode == "dev" and x_debug_employee_id:
         # Ключ — max_user_id, не первичный ключ employees.id: тот же способ
         # резолва, что и прод-ветка ниже, только без проверки HMAC. Так

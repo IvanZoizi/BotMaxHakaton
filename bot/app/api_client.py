@@ -48,14 +48,21 @@ async def _request(
 
     Бот почти никогда не действует "от своего имени" — согласование,
     отклонение, принятие смены всегда инициированы конкретным человеком в
-    MAX, поэтому запрос к backend идёт с его identity, как и с фронтенда
-    (см. api/app/auth.py — тот же dev-режим, X-Debug-Employee-Id).
+    MAX, поэтому запрос к backend идёт с его identity — X-Debug-Employee-Id.
+    X-Internal-Secret (тот же секрет, что и для api -> bot уведомлений,
+    BOT_INTERNAL_NOTIFY_SECRET) — доказательство серверу, что этот заголовок
+    прислал именно бот, а не кто угодно; без него api/app/auth.py принял бы
+    X-Debug-Employee-Id только при AUTH_MODE=dev (см. комментарий там же).
     Исключение — POST /employees/link: вызывающий на этом шаге ещё не
-    привязанный сотрудник, поэтому acting_max_user_id=None и заголовок не
-    отправляется вовсе (см. api/app/routers/employees.py).
+    привязанный сотрудник, поэтому acting_max_user_id=None и заголовки не
+    отправляются вовсе (см. api/app/routers/employees.py).
     """
     session = await get_session()
-    headers = {"X-Debug-Employee-Id": acting_max_user_id} if acting_max_user_id is not None else {}
+    headers = (
+        {"X-Debug-Employee-Id": acting_max_user_id, "X-Internal-Secret": settings.internal_notify_secret}
+        if acting_max_user_id is not None
+        else {}
+    )
 
     logger.info("-> %s %s (as %s)", method, path, acting_max_user_id or "unauthenticated")
     try:
