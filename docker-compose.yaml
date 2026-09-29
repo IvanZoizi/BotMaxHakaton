@@ -59,7 +59,25 @@ services:
       - bot
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+
+  # Автопродление сертификата Let's Encrypt (первичный выпуск — вручную,
+  # см. scripts/init-letsencrypt.sh). Раз в 12 часов пробует renew;
+  # certbot сам ничего не делает, пока сертификату не пора обновляться.
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >-
+      sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;'
 
 volumes:
   postgres_data:
   api_storage:
+  certbot_conf:
+  certbot_www:
