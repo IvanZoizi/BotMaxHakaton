@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 from urllib.parse import parse_qsl
 
 from fastapi import Depends, Header
@@ -41,6 +42,17 @@ def _verify_init_data(init_data: str) -> str:
         raise unauthorized()
 
     max_user_id = pairs.get("user_id") or pairs.get("id")
+    if not max_user_id:
+        # Реальный Bridge (как и Telegram WebApp, на который ориентировался
+        # изначальный код) кладёт id не плоским полем, а внутри `user` —
+        # JSON-строкой вида {"id": 123, ...}. См. тот же разбор на фронте:
+        # frontend/src/bridge/maxBridge.ts readMaxUserId.
+        try:
+            user = json.loads(pairs.get("user", "null"))
+        except json.JSONDecodeError:
+            user = None
+        if isinstance(user, dict) and user.get("id") is not None:
+            max_user_id = str(user["id"])
     if not max_user_id:
         raise unauthorized("initData не содержит идентификатор пользователя")
     return max_user_id
