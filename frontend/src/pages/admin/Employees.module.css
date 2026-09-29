@@ -8,3 +8,71 @@
   font-size: 12px;
 }
 
+.row {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.rowButton {
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
+.categoryTag {
+  margin: 4px 0 0;
+  font-family: var(--font-family);
+  font-size: 12px;
+  color: var(--status-info-text);
+}
+
+.editPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 12px;
+  background: var(--surface-secondary);
+}
+
+.fieldLabel {
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.select {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  background: var(--surface-primary);
+  color: var(--color-text-primary);
+}
+
+.roleList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.roleOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+

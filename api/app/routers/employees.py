@@ -7,13 +7,30 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..auth import require_role
+from ..audit import record as record_audit
+from ..auth import get_current_employee, require_role
 from ..db import get_db
-from ..db_models import Employee
-from ..errors import conflict, not_found
-from ..schemas import CreatedEmployee, CreateEmployeeRequest, LeaveBalance, LinkEmployeeRequest, Me
+from ..db_models import Employee, Location
+from ..errors import conflict, forbidden, not_found
+from ..schemas import CreatedEmployee, CreateEmployeeRequest, LeaveBalance
+from ..schemas import Employee as EmployeeDTO
+from ..schemas import LinkEmployeeRequest, Me, ShiftOutcomeRequest, UpdateEmployeeRequest
+from ..util import parse_uuid_or_404
 
 router = APIRouter(tags=["Employees"])
+
+
+def _to_employee_dto(employee: Employee) -> EmployeeDTO:
+    return EmployeeDTO(
+        id=employee.id,
+        full_name=employee.full_name,
+        position=employee.position,
+        location_id=employee.location_id,
+        location_name=employee.location.name if employee.location else None,
+        roles=employee.roles,
+        category=employee.category,
+        skills=employee.skills,
+    )
 
 
 def _generate_invite_code() -> str:
@@ -28,11 +45,21 @@ def create_employee(
 ) -> CreatedEmployee:
     """Контракт §2 сценарий 1: руководитель создаёт запись сотрудника и
     получает персональную ссылку-приглашение (join_<inviteCode>, строит её
-    бот). Новый сотрудник наследует компанию и точку руководителя — в MVP
-    одна точка на компанию (README §12 — данные смоделированы)."""
+    бот). Новый сотрудник наследует точку руководителя, если admin не указал
+    другую (§1a плана мультитенантности — админ может завести руководителя
+    сразу в новой точке своей компании)."""
+    location_id = manager.location_id
+    if payload.location_id is not None:
+        if "admin" not in manager.roles:
+            raise forbidden("Только администратор может указать другую точку")
+        location = db.get(Location, payload.location_id)
+        if location is None or location.company_id != manager.company_id:
+            raise not_found("Точка не найдена")
+        location_id = location.id
+
     employee = Employee(
         company_id=manager.company_id,
-        location_id=manager.location_id,
+        location_id=location_id,
         invite_code=_generate_invite_code(),
         full_name=payload.full_name,
         position=payload.position,
@@ -87,3 +114,83 @@ def link_employee(payload: LinkEmployeeRequest, db: Session = Depends(get_db)) -
         leave_balance=LeaveBalance(days=employee.leave_balance_days, as_of=employee.balance_as_of),
         is_demo=employee.is_demo,
     )
+
+
+@router.get("/employees", response_model=list[EmployeeDTO])
+def list_employees(
+    employee: Employee = Depends(require_role("manager", "admin")),
+    db: Session = Depends(get_db),
+) -> list[EmployeeDTO]:
+    """GAP-06: manager видит свою точку, admin — всю компанию (несколько
+    точек, §1a плана мультитенантности)."""
+    if "admin" in employee.roles:
+        stmt = select(Employee).where(Employee.company_id == employee.company_id)
+    else:
+        stmt = select(Employee).where(Employee.location_id == employee.location_id)
+    rows = db.execute(stmt.order_by(Employee.full_name)).scalars().all()
+    return [_to_employee_dto(row) for row in rows]
+
+
+@router.patch("/employees/{employee_id}", response_model=EmployeeDTO)
+def update_employee(
+    employee_id: str,
+    payload: UpdateEmployeeRequest,
+    admin: Employee = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+) -> EmployeeDTO:
+    """GAP-06 + №15: закрывает то, что льготную категорию физически некем
+    было назначить — до этого проверка privileged_category в движке правил
+    была мёртвым кодом (employee.category нигде не выставлялся)."""
+    target = db.get(Employee, parse_uuid_or_404(employee_id, "Сотрудник не найден"))
+    if target is None or target.company_id != admin.company_id:
+        raise not_found("Сотрудник не найден")
+
+    if payload.full_name is not None:
+        target.full_name = payload.full_name
+    if payload.position is not None:
+        target.position = payload.position
+    if payload.roles is not None:
+        target.roles = [r.value for r in payload.roles]
+    if payload.category is not None:
+        target.category = payload.category or None
+    if payload.skills is not None:
+        target.skills = payload.skills
+
+    db.commit()
+    db.refresh(target)
+    return _to_employee_dto(target)
+
+
+@router.post("/employees/{employee_id}/shift-outcome", response_model=EmployeeDTO)
+def record_shift_outcome(
+    employee_id: str,
+    payload: ShiftOutcomeRequest,
+    manager: Employee = Depends(require_role("manager")),
+    db: Session = Depends(get_db),
+) -> EmployeeDTO:
+    """№26: без этого shifts_completed/shifts_no_show навсегда остаются
+    значениями из seed-данных — рейтинг надёжности никогда не меняется."""
+    target = db.get(Employee, parse_uuid_or_404(employee_id, "Сотрудник не найден"))
+    if target is None or target.location_id != manager.location_id:
+        raise not_found("Сотрудник не найден")
+
+    if payload.completed:
+        target.shifts_completed += 1
+    else:
+        target.shifts_no_show += 1
+
+    db.commit()
+    db.refresh(target)
+
+    record_audit(
+        db,
+        actor_id=manager.id,
+        actor_name=manager.full_name,
+        entity="employee",
+        entity_id=target.id,
+        action="shift_completed" if payload.completed else "shift_no_show",
+        from_status=None,
+        to_status=None,
+    )
+    db.commit()
+    return _to_employee_dto(target)

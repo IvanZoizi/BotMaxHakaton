@@ -139,6 +139,38 @@ async function safeCallWithTimeout<T>(fn: () => Promise<T>, fallback: T, timeout
   }
 }
 
+/**
+ * `initData` — та же query-строка формата Telegram WebApp, что подписывает
+ * бэкенд (см. api/app/auth.py._verify_init_data, комментарий там же: "аналог
+ * Telegram WebApp initData"). Разбираем её тем же способом, чтобы достать:
+ *  - `user.id` — реальный числовой MAX user id, нужен для bootstrap-вызовов
+ *    (POST /companies, POST /employees/link), которые идут ДО того, как
+ *    появляется привязанный сотрудник — им неоткуда взять identity иначе;
+ *  - `start_param` — deeplink-payload (join_<code> / off_<id> / t7_<год>),
+ *    тот же payload, что бот передаёт через OpenAppButton (см.
+ *    bot/app/deeplinks.py). Название поля для MAX Bridge не подтверждено
+ *    официальной документацией на момент написания — проверяем оба
+ *    вероятных варианта (`start_param`, `startapp`) и деградируем в null.
+ */
+function parseInitData(initData: string): Record<string, string> {
+  const params = new URLSearchParams(initData);
+  return Object.fromEntries(params.entries());
+}
+
+function readMaxUserId(initData: string): string | null {
+  try {
+    const user = JSON.parse(parseInitData(initData).user ?? 'null') as { id?: string | number } | null;
+    return user?.id != null ? String(user.id) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStartParam(initData: string): string | null {
+  const fields = parseInitData(initData);
+  return fields.start_param ?? fields.startapp ?? null;
+}
+
 export const maxBridge = {
   isNative: isRealBridgeAvailable,
   get platform(): MaxPlatform {
@@ -146,6 +178,12 @@ export const maxBridge = {
   },
   get initData(): string {
     return getBridge().initData;
+  },
+  get maxUserId(): string | null {
+    return readMaxUserId(getBridge().initData);
+  },
+  get startParam(): string | null {
+    return readStartParam(getBridge().initData);
   },
   biometric: {
     init: () => safeCallWithTimeout(() => getBridge().BiometricManager.init(), { available: false }, 1000),

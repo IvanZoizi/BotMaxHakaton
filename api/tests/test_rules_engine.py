@@ -79,6 +79,22 @@ def test_insufficient_balance_blocks_with_red_level(engine: RulesEngine) -> None
     balance_check = by_rule(verdict.checks, "tk.115.balance")
     assert balance_check.passed is False
     assert verdict.level == VerdictLevel.RED
+    # №4: короче 14 дней (минимум по ст. 125 ТК РФ) предлагать нечего.
+    assert verdict.suggestion is None
+
+
+def test_insufficient_balance_suggests_shortened_period(engine: RulesEngine) -> None:
+    # 24 календарных дня запрошено (без праздников), остаток — 20: короче,
+    # чем просили, но >=14 (ст. 125 ТК РФ), поэтому есть что предложить.
+    request = LeaveRequestContext(start_date=date(2026, 10, 5), end_date=date(2026, 10, 28), today=TODAY)
+    verdict = engine.evaluate(marina(leave_balance_days=20), request)
+
+    balance_check = by_rule(verdict.checks, "tk.115.balance")
+    assert balance_check.passed is False
+    assert verdict.level == VerdictLevel.RED
+    assert verdict.suggestion is not None
+    assert verdict.suggestion.start_date == date(2026, 10, 5)
+    assert verdict.suggestion.end_date == date(2026, 10, 24)  # 20 дней с 5 октября
 
 
 def test_team_overlap_downgrades_to_yellow(engine: RulesEngine) -> None:

@@ -11,6 +11,7 @@ DOCUMENT_TITLES = {
     "application": "Заявление о предоставлении отпуска",
     "order_t6": "Приказ о предоставлении отпуска (форма Т-6)",
     "schedule_t7": "График отпусков (форма Т-7)",
+    "notice": "Уведомление о начале отпуска",
 }
 
 # Docker-образ api ставит fonts-dejavu-core (см. Dockerfile) — DejaVu содержит

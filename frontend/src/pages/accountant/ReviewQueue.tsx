@@ -23,9 +23,6 @@ export default function ReviewQueue() {
     <div className="screen">
       <ListHeader title="К проверке" />
       <div className="screen-content">
-        <p className={styles.gapNote}>
-          ⚠ Часть того же GAP-03 — реестр фильтруется на клиенте по status=signed|to_sign.
-        </p>
         {loading && <SkeletonScreen />}
         {!loading && error && <ErrorState onRetry={reload} />}
         {!loading && !error && items.length === 0 && <EmptyState message="Нечего проверять" />}

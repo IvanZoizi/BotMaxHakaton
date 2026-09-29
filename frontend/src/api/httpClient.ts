@@ -15,21 +15,34 @@ import { ApiError, notLinked, validationError } from './errors';
 import { maxBridge } from '../bridge/maxBridge';
 import type {
   ApproveLeaveRequest,
+  ApproveScheduleT7Request,
   AuditEntry,
   AvailabilityWindow,
+  CompanySummary,
+  CreateCompanyRequest,
+  CreatedEmployee,
+  CreateEmployeeRequest,
+  CreateLocationRequest,
   CreateShiftOfferRequest,
   DocumentDetail,
+  DocumentRegistryEntry,
+  Employee,
   ErrorResponseBody,
   LeaveRequestDetail,
   LeaveRequestSummary,
+  LocationSummary,
   Me,
   PreviewRequest,
   RejectLeaveRequest,
   Rule,
+  ScheduleT7Entry,
+  Shift,
   ShiftCandidate,
   ShiftOffer,
   SubmitLeaveRequest,
+  SubmitScheduleT7Entry,
   TeamCalendarEntry,
+  UpdateEmployeeRequest,
   Verdict,
 } from './types';
 
@@ -67,17 +80,78 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+/**
+ * Для двух bootstrap-эндпоинтов (POST /companies, POST /employees/link) —
+ * вызывающий на этом шаге ещё НЕ привязан ни к какому сотруднику, поэтому
+ * request() выше не подходит (кидает notLinked() раньше, чем дойдёт до
+ * fetch). Ни один из них не проверяется через get_current_employee на
+ * бэкенде, так что debug/init-data заголовки им не нужны.
+ */
+async function requestUnauthenticated<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (init.body) headers.set('Content-Type', 'application/json');
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch {
+    throw validationError('Не удалось связаться с сервером. Проверьте соединение.');
+  }
+
+  const isJson = response.headers.get('content-type')?.includes('application/json');
+  const body = isJson ? await response.json() : undefined;
+
+  if (!response.ok) {
+    const err = (body as ErrorResponseBody | undefined)?.error;
+    throw new ApiError(err?.code ?? 'VALIDATION_ERROR', err?.message ?? 'Ошибка сервера', response.status, err?.details ?? []);
+  }
+  return body as T;
+}
+
 const json = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
 
 // ---- GET /me ----------------------------------------------------------
-export const getMe = () => request<Me>('/me');
+// №17: asOf — необязательный параметр «остаток на произвольную дату».
+export const getMe = (asOf?: string) => request<Me>(`/me${asOf ? `?asOf=${asOf}` : ''}`);
+
+// ---- POST /companies (bootstrap, без привязанного сотрудника) ------------
+export const createCompany = (payload: Omit<CreateCompanyRequest, 'maxUserId'>) =>
+  requestUnauthenticated<Me>(
+    '/companies',
+    json({ ...payload, maxUserId: maxBridge.maxUserId ?? '' } satisfies CreateCompanyRequest),
+  );
+
+// ---- POST /locations -------------------------------------------------------
+export const createLocation = (payload: CreateLocationRequest) =>
+  request<LocationSummary>('/locations', json(payload));
+
+// ---- GET /companies/me/summary --------------------------------------------
+export const getCompanySummary = () => request<CompanySummary>('/companies/me/summary');
+
+// ---- POST /employees/link (bootstrap, без привязанного сотрудника) -------
+export const linkEmployee = (inviteCode: string) =>
+  requestUnauthenticated<Me>(
+    '/employees/link',
+    json({ inviteCode, maxUserId: maxBridge.maxUserId ?? '' }),
+  );
+
+// ---- POST /employees --------------------------------------------------------
+export const createEmployee = (payload: CreateEmployeeRequest) =>
+  request<CreatedEmployee>('/employees', json(payload));
+
+// ---- GET /employees ---------------------------------------------------------
+export const listEmployees = () => request<Employee[]>('/employees');
+
+// ---- PATCH /employees/{id} ---------------------------------------------------
+export const updateEmployee = (id: string, payload: UpdateEmployeeRequest) =>
+  request<Employee>(`/employees/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 // ---- POST /leave-requests/preview -------------------------------------
 export const previewLeaveRequest = (body: PreviewRequest) =>
   request<Verdict>('/leave-requests/preview', json(body));
 
 // ---- GET /leave-requests?scope= ----------------------------------------
-export const listLeaveRequests = (scope: 'mine' | 'inbox') =>
+export const listLeaveRequests = (scope: 'mine' | 'inbox' | 'deadlines') =>
   request<LeaveRequestSummary[]>(`/leave-requests?scope=${scope}`);
 
 // ---- POST /leave-requests ------------------------------------------------
@@ -109,6 +183,48 @@ export const listRules = () => request<Rule[]>('/rules');
 // ---- GET /documents/{id} --------------------------------------------------
 export const getDocument = (id: string) => request<DocumentDetail>(`/documents/${id}`);
 
+// ---- GET /documents (GAP-03: реестр документов компании) -------------------
+export const listAllDocuments = () => request<DocumentRegistryEntry[]>('/documents');
+export const listAllDocumentsWithOwner = listAllDocuments;
+
+// ---- POST /documents/{id}/sign (GAP-01) ------------------------------------
+export const signDocument = (id: string, method: 'biometric' | 'confirm') =>
+  request<DocumentDetail>(`/documents/${id}/sign`, json({ method }));
+
+// ---- GET /leave-requests?scope=deadlines (GAP-04) --------------------------
+export const listPaymentDeadlines = () => listLeaveRequests('deadlines');
+
+// ---- POST /leave-requests/{id}/mark-paid (GAP-04) --------------------------
+export const markPaid = (id: string) =>
+  request<LeaveRequestDetail>(`/leave-requests/${id}/mark-paid`, { method: 'POST' });
+
+// ---- GET /shifts?status= ----------------------------------------------------
+export const listShifts = (status?: string) => request<Shift[]>(`/shifts${status ? `?status=${status}` : ''}`);
+
+/** Substitution.tsx header — не отдельный эндпоинт, а композиция из уже
+ * существующих: находим смену в списке смен точки, дальше берём имя и даты
+ * из заявки на отпуск, которая её открыла (Shift.sourceRequestId). */
+export async function getShiftContext(
+  shiftId: string,
+): Promise<{ employeeName: string; startDate: string; endDate: string } | null> {
+  const shifts = await listShifts();
+  const shift = shifts.find((s) => s.id === shiftId);
+  if (!shift?.sourceRequestId) return null;
+  const request_ = await getLeaveRequest(shift.sourceRequestId);
+  return { employeeName: request_.employee.fullName, startDate: request_.startDate, endDate: request_.endDate };
+}
+
+// ---- POST /schedule-t7/entries ----------------------------------------------
+export const submitScheduleT7Entry = (payload: SubmitScheduleT7Entry) =>
+  request<ScheduleT7Entry>('/schedule-t7/entries', json(payload));
+
+// ---- GET /schedule-t7?year= --------------------------------------------------
+export const listScheduleT7 = (year: number) => request<ScheduleT7Entry[]>(`/schedule-t7?year=${year}`);
+
+// ---- POST /schedule-t7/approve -----------------------------------------------
+export const approveScheduleT7 = (payload: ApproveScheduleT7Request) =>
+  request<ScheduleT7Entry[]>('/schedule-t7/approve', json(payload));
+
 // ---- GET /shifts/{id}/candidates ------------------------------------------
 export const listShiftCandidates = (shiftId: string) =>
   request<ShiftCandidate[]>(`/shifts/${shiftId}/candidates`);
@@ -120,6 +236,10 @@ export const createShiftOffer = (body: CreateShiftOfferRequest) =>
 // ---- POST /shift-offers/{id}/accept -----------------------------------------
 export const acceptShiftOffer = (id: string) =>
   request<ShiftOffer>(`/shift-offers/${id}/accept`, { method: 'POST' });
+
+// ---- POST /shift-offers/{id}/decline (GAP-05) -------------------------------
+export const declineShiftOffer = (id: string) =>
+  request<ShiftOffer>(`/shift-offers/${id}/decline`, { method: 'POST' });
 
 // ---- GET /shift-offers/{id} (Рекомендация — см. routers/shifts.py get_shift_offer) --
 // `payBonus` не приходит с бэкенда (README §9 Won't Have №32 — зарплатных

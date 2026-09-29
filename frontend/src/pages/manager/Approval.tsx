@@ -7,10 +7,11 @@ import { VerdictBanner } from '../../components/VerdictBanner';
 import { CheckRow } from '../../components/CheckRow';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
 import { SkeletonScreen, ErrorState, ForbiddenState } from '../../components/States';
-import { approveLeaveRequest, getLeaveRequest, rejectLeaveRequest } from '../../api/client';
+import { approveLeaveRequest, getLeaveRequest, getTeamCalendar, rejectLeaveRequest } from '../../api/client';
 import { ApiError } from '../../api/errors';
 import { useAsync } from '../../lib/useAsync';
 import { formatRu, formatRange, addDays, formatDateTime } from '../../lib/date';
+import { findAlternativeWindows } from '../../lib/alternativeDates';
 import { getRuleExplanation } from '../../lib/ruleExplanations';
 import { maxBridge } from '../../bridge/maxBridge';
 import type { CheckResult, LeaveRequestDetail, RejectReasonCode } from '../../api/types';
@@ -35,6 +36,10 @@ export default function Approval() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const { data: request, loading, error, reload } = useAsync(() => getLeaveRequest(id), [id]);
+  const { data: teamCalendar } = useAsync(
+    () => (request ? getTeamCalendar(request.startDate, addDays(request.startDate, 180)) : Promise.resolve([])),
+    [request?.startDate],
+  );
 
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
@@ -98,12 +103,23 @@ export default function Approval() {
   }
 
   async function handleReject() {
-    if (!reasonCode) return;
+    if (!reasonCode || !request) return;
     if (reasonCode === 'other' && !reasonText.trim()) return;
     setRejecting(true);
     setInlineError(null);
     try {
-      await rejectLeaveRequest(id, { reasonCode, reasonText: reasonText || null });
+      const [firstAlternative] = findAlternativeWindows(
+        request.calendarDays,
+        (teamCalendar ?? []).filter((e) => e.employeeId !== request.employee.id),
+        addDays(request.startDate, 1),
+        1,
+      );
+      await rejectLeaveRequest(id, {
+        reasonCode,
+        reasonText: reasonText || null,
+        alternativeStart: firstAlternative?.startDate ?? null,
+        alternativeEnd: firstAlternative?.endDate ?? null,
+      });
       setRejectOpen(false);
       reload();
     } catch (e) {
@@ -243,9 +259,13 @@ export default function Approval() {
         )}
         <p className={styles.altDates}>
           Альтернативные даты:{' '}
-          {[addDays(request.startDate, 25), addDays(request.startDate, -5), addDays(request.startDate, 8)]
-            .map(formatRu)
-            .join(' · ')}
+          {findAlternativeWindows(
+            request.calendarDays,
+            (teamCalendar ?? []).filter((e) => e.employeeId !== request.employee.id),
+            addDays(request.startDate, 1),
+          )
+            .map((w) => formatRu(w.startDate))
+            .join(' · ') || 'свободных окон в ближайшие полгода не нашлось'}
         </p>
         <Button
           disabled={!reasonCode || (reasonCode === 'other' && !reasonText.trim())}

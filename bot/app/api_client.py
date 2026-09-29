@@ -114,6 +114,16 @@ async def create_employee(
     )
 
 
+async def list_employees(*, acting_max_user_id: str) -> list[dict[str, Any]]:
+    return await _request("GET", "/employees", acting_max_user_id=acting_max_user_id)
+
+
+async def approve_schedule_t7(year: int, *, acting_max_user_id: str) -> list[dict[str, Any]]:
+    return await _request(
+        "POST", "/schedule-t7/approve", json={"year": year}, acting_max_user_id=acting_max_user_id
+    )
+
+
 async def link_employee(invite_code: str, max_user_id: str) -> dict[str, Any]:
     return await _request(
         "POST",

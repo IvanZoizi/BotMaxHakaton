@@ -12,6 +12,15 @@ __all__ = [
     "LeaveBalance",
     "Me",
     "Employee",
+    "CreateEmployeeRequest",
+    "CreatedEmployee",
+    "UpdateEmployeeRequest",
+    "ShiftOutcomeRequest",
+    "CreateCompanyRequest",
+    "CreateLocationRequest",
+    "LocationSummary",
+    "CompanySummary",
+    "LinkEmployeeRequest",
     "LeaveRequestStatus",
     "DocumentKind",
     "DocumentStatus",
@@ -20,6 +29,8 @@ __all__ = [
     "HistoryEvent",
     "DocumentSummary",
     "DocumentDetail",
+    "DocumentRegistryEntry",
+    "SignDocumentRequest",
     "LeaveRequestSummary",
     "LeaveRequestDetail",
     "PreviewRequest",
@@ -28,12 +39,19 @@ __all__ = [
     "RejectReasonCode",
     "RejectLeaveRequest",
     "TeamCalendarEntry",
+    "ShiftStatus",
+    "CreateShiftRequest",
+    "Shift",
     "ShiftCandidate",
     "CreateShiftOfferRequest",
     "ShiftOfferStatus",
     "ShiftOffer",
     "Weekday",
     "AvailabilityWindow",
+    "ScheduleT7EntryStatus",
+    "SubmitScheduleT7Entry",
+    "ScheduleT7Entry",
+    "ApproveScheduleT7Request",
     "AuditEntry",
     "ErrorCode",
     "ErrorDetail",
@@ -64,6 +82,9 @@ class Employee(CamelModel):
     position: str
     location_id: uuid.UUID
     location_name: str | None = None
+    roles: list[Role] = Field(default_factory=list)
+    category: str | None = None
+    skills: list[str] = Field(default_factory=list)
 
 
 class CreateEmployeeRequest(CamelModel):
@@ -76,6 +97,10 @@ class CreateEmployeeRequest(CamelModel):
     full_name: str
     position: str
     role: Role = Role.EMPLOYEE
+    # Admin может создать руководителя сразу в другой точке своей компании
+    # (см. §1a плана мультитенантности); manager без этого поля создаёт в
+    # своей текущей location_id, как раньше.
+    location_id: uuid.UUID | None = None
 
 
 class CreatedEmployee(CamelModel):
@@ -84,6 +109,45 @@ class CreatedEmployee(CamelModel):
     position: str
     roles: list[Role]
     invite_code: str
+
+
+class UpdateEmployeeRequest(CamelModel):
+    full_name: str | None = None
+    position: str | None = None
+    roles: list[Role] | None = None
+    category: str | None = None
+    skills: list[str] | None = None
+
+
+class ShiftOutcomeRequest(CamelModel):
+    completed: bool
+
+
+class CreateCompanyRequest(CamelModel):
+    """Без аутентификации — симметрично LinkEmployeeRequest: вызывающий на
+    этом шаге ещё не привязан ни к какой компании (§1a плана)."""
+
+    name: str
+    location_name: str
+    admin_full_name: str
+    max_user_id: str
+
+
+class CreateLocationRequest(CamelModel):
+    name: str
+
+
+class LocationSummary(CamelModel):
+    id: uuid.UUID
+    name: str
+
+
+class CompanySummary(CamelModel):
+    locations: int
+    managers_invited: int
+    employees_connected: int
+    employees_invited: int
+    location_name: str | None = None
 
 
 class LinkEmployeeRequest(CamelModel):
@@ -108,6 +172,7 @@ class DocumentKind(str, Enum):
     APPLICATION = "application"
     ORDER_T6 = "order_t6"
     SCHEDULE_T7 = "schedule_t7"
+    NOTICE = "notice"
 
 
 class DocumentStatus(str, Enum):
@@ -157,6 +222,18 @@ class DocumentDetail(DocumentSummary):
     sha256: str
     integrity_verified: bool
     history: list[HistoryEvent]
+
+
+class DocumentRegistryEntry(DocumentSummary):
+    """GAP-03: реестр документов компании — та же карточка + владелец,
+    чтобы бухгалтер видел «Приказ Т-6 № 14/2026 · Кузнецов А. П.» без
+    отдельного похода за именем сотрудника."""
+
+    owner_name: str
+
+
+class SignDocumentRequest(CamelModel):
+    method: ApprovalMethod
 
 
 class LeaveRequestSummary(CamelModel):
@@ -217,6 +294,31 @@ class TeamCalendarEntry(CamelModel):
     end_date: date
 
 
+class ShiftStatus(str, Enum):
+    OPEN = "open"
+    OFFERED = "offered"
+    FILLED = "filled"
+    CONFIRMED = "confirmed"
+
+
+class CreateShiftRequest(CamelModel):
+    starts_at: datetime
+    ends_at: datetime
+    role_required: str
+    skills_required: list[str] = Field(default_factory=list)
+
+
+class Shift(CamelModel):
+    id: uuid.UUID
+    location_id: uuid.UUID
+    starts_at: datetime
+    ends_at: datetime
+    role_required: str
+    skills_required: list[str] = Field(default_factory=list)
+    status: ShiftStatus
+    source_request_id: uuid.UUID | None = None
+
+
 class ShiftCandidate(CamelModel):
     employee_id: uuid.UUID
     full_name: str
@@ -262,6 +364,32 @@ class AvailabilityWindow(CamelModel):
     time_from: str
     time_to: str
     open_for_extra: bool
+
+
+class ScheduleT7EntryStatus(str, Enum):
+    PROPOSED = "proposed"
+    APPROVED = "approved"
+
+
+class SubmitScheduleT7Entry(CamelModel):
+    year: int
+    start_date: date
+    end_date: date
+
+
+class ScheduleT7Entry(CamelModel):
+    id: uuid.UUID
+    employee_id: uuid.UUID
+    full_name: str
+    year: int
+    start_date: date
+    end_date: date
+    status: ScheduleT7EntryStatus
+    conflicts_with: list[uuid.UUID] = Field(default_factory=list)
+
+
+class ApproveScheduleT7Request(CamelModel):
+    year: int
 
 
 class AuditEntry(CamelModel):

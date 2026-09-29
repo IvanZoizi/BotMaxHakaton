@@ -41,6 +41,13 @@ def score_candidates(db: Session, shift: Shift) -> list[ScoredCandidate]:
         if employee.id == exclude_employee_id:
             continue
 
+        # Квалификация/допуски (README §7 шаг 6: «по квалификации, допускам,
+        # окнам доступности, расстоянию, истории выходов» — не по фото/симпатии).
+        if employee.position != shift.role_required:
+            continue
+        if shift.skills_required and not set(shift.skills_required) <= set(employee.skills or []):
+            continue
+
         windows = db.execute(
             select(AvailabilityWindow).where(
                 AvailabilityWindow.employee_id == employee.id,
@@ -56,6 +63,8 @@ def score_candidates(db: Session, shift: Shift) -> list[ScoredCandidate]:
 
         score = 40.0
         reasons = [f"Свободен {_WEEKDAY_LABELS[weekday_code]} {window.time_from}–{window.time_to}"]
+        if shift.skills_required:
+            reasons.append("Должность и допуски совпадают")
 
         if employee.distance_km is not None:
             score += max(0.0, 20.0 - employee.distance_km * 4.0)

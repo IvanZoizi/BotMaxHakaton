@@ -29,10 +29,6 @@ export default function Deadlines() {
     <div className="screen">
       <ListHeader title="Сроки выплат" />
       <div className="screen-content">
-        <p className={styles.gapNote}>
-          ⚠ Списочного endpoint'а и действия отметки выплаты нет в контракте (GAP-04) — показано на
-          основе payDeadline из заявок.
-        </p>
         {loading && <SkeletonScreen />}
         {!loading && error && <ErrorState onRetry={reload} />}
         {!loading && !error && requests?.length === 0 && <EmptyState message="Ближайших выплат нет" />}

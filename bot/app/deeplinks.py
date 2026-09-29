@@ -24,10 +24,18 @@ class ShiftOfferDeepLink:
     offer_id: str
 
 
-DeepLink = JoinDeepLink | ShiftOfferDeepLink | None
+@dataclass(frozen=True)
+class ScheduleT7DeepLink:
+    """`t7_<год>` — форма отпуска на будущий год (README §9 №24)."""
+
+    year: int
+
+
+DeepLink = JoinDeepLink | ShiftOfferDeepLink | ScheduleT7DeepLink | None
 
 _JOIN_PREFIX = "join_"
 _SHIFT_OFFER_PREFIX = "off_"
+_SCHEDULE_T7_PREFIX = "t7_"
 
 
 def parse_deep_link(payload: str | None) -> DeepLink:
@@ -39,6 +47,9 @@ def parse_deep_link(payload: str | None) -> DeepLink:
     if payload.startswith(_SHIFT_OFFER_PREFIX):
         offer_id = payload.removeprefix(_SHIFT_OFFER_PREFIX)
         return ShiftOfferDeepLink(offer_id=offer_id) if offer_id else None
+    if payload.startswith(_SCHEDULE_T7_PREFIX):
+        year_str = payload.removeprefix(_SCHEDULE_T7_PREFIX)
+        return ScheduleT7DeepLink(year=int(year_str)) if year_str.isdigit() else None
     return None
 
 
@@ -48,3 +59,7 @@ def build_join_payload(code: str) -> str:
 
 def build_shift_offer_payload(offer_id: str) -> str:
     return f"{_SHIFT_OFFER_PREFIX}{offer_id}"
+
+
+def build_schedule_t7_payload(year: int) -> str:
+    return f"{_SCHEDULE_T7_PREFIX}{year}"

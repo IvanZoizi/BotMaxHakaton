@@ -16,13 +16,16 @@ from .logging_config import configure_logging
 from .notify import router as notify_router
 from .routers.employee_admin import employee_admin_router
 from .routers.leave_requests import leave_requests_router
+from .routers.schedule_t7 import schedule_t7_router
 from .routers.shift_offers import shift_offers_router
 from .routers.start import start_router
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
-dp.include_routers(start_router, leave_requests_router, shift_offers_router, employee_admin_router)
+dp.include_routers(
+    start_router, leave_requests_router, shift_offers_router, employee_admin_router, schedule_t7_router
+)
 
 
 @dp.on_started()

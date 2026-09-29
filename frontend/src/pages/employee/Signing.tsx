@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { SignatureStamp } from '../../components/DocumentCard';
 import { BottomSheet, SheetTitle, SheetText } from '../../components/BottomSheet';
 import { SkeletonScreen, ErrorState } from '../../components/States';
-import { getDocument, signDocument } from '../../api/mockApi';
+import { getDocument, signDocument } from '../../api/client';
 import { useAsync } from '../../lib/useAsync';
 import { maxBridge } from '../../bridge/maxBridge';
 import { formatDateTime } from '../../lib/date';

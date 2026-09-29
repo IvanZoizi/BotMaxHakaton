@@ -102,6 +102,32 @@ def notify_leave_request_decided(
     )
 
 
+def notify_leave_request_cancelled(
+    *,
+    manager_max_user_id: str | None,
+    request_id: str,
+    employee_full_name: str,
+    start_date: str,
+    end_date: str,
+) -> None:
+    """№25/№7: сотрудник отозвал уже согласованный отпуск — руководитель
+    должен узнать, т.к. на это время уже могла быть открыта смена."""
+    manager_user_id = _as_max_user_id(manager_max_user_id)
+    if manager_user_id is None:
+        logger.info("Руководитель без числового max_user_id — уведомление об отзыве %s пропущено", request_id)
+        return
+    _post(
+        "/internal/notify/leave-request-cancelled",
+        {
+            "manager_user_id": manager_user_id,
+            "request_id": request_id,
+            "employee_full_name": employee_full_name,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+
 def notify_employee_leave_reminder(
     *, employee_max_user_id: str | None, request_id: str, start_date: str, end_date: str
 ) -> None:
@@ -179,6 +205,23 @@ def notify_employee_welcome_back(*, employee_max_user_id: str | None, request_id
     _post(
         "/internal/notify/employee-welcome-back",
         {"employee_user_id": employee_user_id, "request_id": request_id},
+    )
+
+
+def notify_shift_offer_declined(
+    *,
+    manager_max_user_id: str | None,
+    offer_id: str,
+    candidate_full_name: str,
+) -> None:
+    """GAP-05: «Не смогу» — руководитель должен узнать, чтобы предложить смену следующему кандидату."""
+    manager_user_id = _as_max_user_id(manager_max_user_id)
+    if manager_user_id is None:
+        logger.info("Руководитель без числового max_user_id — уведомление об отказе %s пропущено", offer_id)
+        return
+    _post(
+        "/internal/notify/shift-offer-declined",
+        {"manager_user_id": manager_user_id, "offer_id": offer_id, "candidate_full_name": candidate_full_name},
     )
 
 

@@ -44,6 +44,8 @@ class Employee(Base):
     leave_balance_days: Mapped[float] = mapped_column(Float, default=28)
     balance_as_of: Mapped[date] = mapped_column(Date)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Квалификация/допуски для матчинга подмен — сверяется с Shift.skills_required.
+    skills: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     # Ниже — поля для матчинга подмен (README §8 «Матчинг подмен»): дистанция и
     # история выходов смоделированы, т.к. реальной геолокации/учёта смен в MVP нет.
     distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -77,6 +79,8 @@ class LeaveRequest(Base):
     alternative_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     replaces_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # GAP-04: факт выплаты отпускных — NULL, пока бухгалтер не отметил.
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Метки "уже отправлено" для напоминаний планировщика (README §9 №13) —
     # без них при каждом проходе шедулера напоминание уходило бы повторно.
@@ -86,7 +90,9 @@ class LeaveRequest(Base):
     manager_escalation_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     employee: Mapped["Employee"] = relationship()
-    documents: Mapped[list["Document"]] = relationship(order_by="Document.issued_at")
+    documents: Mapped[list["Document"]] = relationship(
+        order_by="Document.issued_at", back_populates="leave_request"
+    )
 
 
 class Document(Base):
@@ -101,6 +107,8 @@ class Document(Base):
     signers: Mapped[list] = mapped_column(JSON, default=list)
     storage_path: Mapped[str] = mapped_column(String, default="")
     sha256: Mapped[str] = mapped_column(String, default="")
+
+    leave_request: Mapped["LeaveRequest"] = relationship(back_populates="documents")
 
 
 class Shift(Base):
@@ -158,3 +166,23 @@ class AuditLog(Base):
     method: Mapped[str | None] = mapped_column(String, nullable=True)
     hash: Mapped[str] = mapped_column(String)
     prev_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class ScheduleT7Entry(Base):
+    """Предпочтение сотрудника по графику отпусков на год вперёд (README §9 №24).
+
+    status: proposed (сотрудник отправил) -> approved (руководитель утвердил
+    весь график точки на этот год, см. routers/schedule_t7.py).
+    """
+
+    __tablename__ = "schedule_t7_entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("employees.id"))
+    year: Mapped[int] = mapped_column(Integer)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String, default="proposed")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    employee: Mapped["Employee"] = relationship()

@@ -18,10 +18,6 @@ export default function Registry() {
     <div className="screen">
       <ListHeader title="Реестр документов" />
       <div className="screen-content">
-        <p className={styles.gapNote}>
-          ⚠ Списочного endpoint'а «все документы компании» нет в контракте (GAP-03) — здесь показаны
-          все документы, известные моку.
-        </p>
         {loading && <SkeletonScreen />}
         {!loading && error && <ErrorState onRetry={reload} />}
         {!loading && !error && documents?.length === 0 && <EmptyState message="Документов пока нет" />}

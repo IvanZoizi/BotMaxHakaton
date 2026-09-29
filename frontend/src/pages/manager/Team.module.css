@@ -8,3 +8,31 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sectionTitle {
+  margin: 0 0 4px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.shiftRow {
+  width: 100%;
+  border: none;
+  background: var(--surface-secondary);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}

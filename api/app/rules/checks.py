@@ -148,7 +148,13 @@ def check_team_overlap(rule, employee, request, calc):
 
 @register("schedule_t7_match")
 def check_schedule_t7_match(rule, employee, request, calc):
-    return None  # график Т-7 вне MVP (README, раздел 16, п.4) — источника данных для сверки ещё нет
+    if employee.approved_schedule is None:
+        return None  # график на этот год ещё не утверждён — сверять не с чем (№24)
+    passed = (
+        request.start_date == employee.approved_schedule.start_date
+        and request.end_date == employee.approved_schedule.end_date
+    )
+    return CheckOutcome(passed=passed, message=rule.messages.pass_ if passed else rule.messages.fail)
 
 
 @register("first_year_six_months")

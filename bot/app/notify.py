@@ -49,6 +49,24 @@ class LeaveRequestDecidedNotification(BaseModel):
     reject_reason: str | None = None
 
 
+class LeaveRequestCancelledNotification(BaseModel):
+    """№25/№7: сотрудник отозвал уже согласованный отпуск — см. api/app/routers/leave_requests.py."""
+
+    manager_user_id: int
+    request_id: str
+    employee_full_name: str
+    start_date: str
+    end_date: str
+
+
+class ShiftOfferDeclinedNotification(BaseModel):
+    """GAP-05 — см. api/app/routers/shifts.py decline_shift_offer."""
+
+    manager_user_id: int
+    offer_id: str
+    candidate_full_name: str
+
+
 class EmployeeLeaveReminderNotification(BaseModel):
     """README §9 №13: «за 14 дней — известить работника»."""
 
@@ -144,6 +162,35 @@ async def notify_leave_request_decided(
         text = f"❌ Заявка на отпуск {payload.start_date} — {payload.end_date} отклонена.{reason}"
 
     await bot.send_message(user_id=payload.employee_user_id, text=text)
+    return {"status": "sent"}
+
+
+@router.post("/notify/leave-request-cancelled")
+async def notify_leave_request_cancelled(
+    payload: LeaveRequestCancelledNotification,
+    x_internal_secret: str | None = Header(default=None),
+) -> dict[str, str]:
+    _check_secret(x_internal_secret)
+    logger.info("Уведомление: отзыв заявки %s -> руководителю %s", payload.request_id, payload.manager_user_id)
+
+    text = (
+        f"↩️ {payload.employee_full_name} отозвал(а) согласованный отпуск "
+        f"{payload.start_date} — {payload.end_date}."
+    )
+    await bot.send_message(user_id=payload.manager_user_id, text=text)
+    return {"status": "sent"}
+
+
+@router.post("/notify/shift-offer-declined")
+async def notify_shift_offer_declined(
+    payload: ShiftOfferDeclinedNotification,
+    x_internal_secret: str | None = Header(default=None),
+) -> dict[str, str]:
+    _check_secret(x_internal_secret)
+    logger.info("Уведомление: отказ от предложения %s -> руководителю %s", payload.offer_id, payload.manager_user_id)
+
+    text = f"{payload.candidate_full_name} не сможет выйти на предложенную смену. Подберите другого кандидата."
+    await bot.send_message(user_id=payload.manager_user_id, text=text)
     return {"status": "sent"}
 
 

@@ -1,11 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import { ListHeader } from '../../components/Header';
 import { EmployeeRow } from '../../components/EmployeeRow';
 import { BottomNav } from '../../components/BottomNav';
 import { SkeletonScreen, ErrorState, EmptyState } from '../../components/States';
-import { getTeamCalendar, listLeaveRequests, DEMO_TODAY_ISO } from '../../api/client';
+import { getTeamCalendar, listLeaveRequests, listShifts, DEMO_TODAY_ISO } from '../../api/client';
 import { EMPLOYEES, EMPLOYEE_BALANCE_DAYS } from '../../api/fixtures';
 import { useAsync } from '../../lib/useAsync';
-import { formatRu } from '../../lib/date';
+import { formatRange, formatRu } from '../../lib/date';
 import styles from './Team.module.css';
 
 function employeeSubtitle(employeeId: string) {
@@ -17,12 +18,14 @@ function employeeSubtitle(employeeId: string) {
 }
 
 export default function Team() {
+  const navigate = useNavigate();
   const { data, loading, error, reload } = useAsync(async () => {
-    const [calendar, inbox] = await Promise.all([
+    const [calendar, inbox, openShifts] = await Promise.all([
       getTeamCalendar('2026-09-01', '2026-12-31'),
       listLeaveRequests('inbox'),
+      listShifts('open'),
     ]);
-    return { calendar, inbox };
+    return { calendar, inbox, openShifts };
   }, []);
 
   if (loading) {
@@ -66,7 +69,24 @@ export default function Team() {
     <div className="screen">
       <ListHeader title="Команда" />
       <div className="screen-content">
-        {rows.length === 0 && <EmptyState message="В команде пока нет активности" />}
+        {!!data.openShifts.length && (
+          <section className={styles.section}>
+            <p className={styles.sectionTitle}>Открытые смены</p>
+            {data.openShifts.map((shift) => (
+              <button
+                key={shift.id}
+                type="button"
+                className={`bordered-row ${styles.row} ${styles.shiftRow}`}
+                onClick={() => navigate(`/manager/shifts/${shift.id}/candidates`)}
+              >
+                <span>{shift.roleRequired}</span>
+                <span className={styles.status}>{formatRange(shift.startsAt.slice(0, 10), shift.endsAt.slice(0, 10))}</span>
+              </button>
+            ))}
+          </section>
+        )}
+
+        {rows.length === 0 && data.openShifts.length === 0 && <EmptyState message="В команде пока нет активности" />}
         {rows.map(([id, { fullName, status }]) => (
           <div key={id} className={`bordered-row ${styles.row}`}>
             <EmployeeRow fullName={fullName} subtitle={employeeSubtitle(id)} />

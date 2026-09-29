@@ -1,3 +1,4 @@
+from .balance import accrued_balance
 from .context import EmployeeContext, LeaveRequestContext, TeamOverlap
 from .engine import RulesEngine
 from .models import (
@@ -15,6 +16,7 @@ from .models import (
 
 __all__ = [
     "RulesEngine",
+    "accrued_balance",
     "EmployeeContext",
     "LeaveRequestContext",
     "TeamOverlap",

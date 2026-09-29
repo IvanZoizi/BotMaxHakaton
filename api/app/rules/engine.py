@@ -102,13 +102,27 @@ class RulesEngine:
     ) -> DateRange | None:
         if level != VerdictLevel.RED:
             return None
+
         notice_failed = any(not c.passed and c.rule_id == "tk.123.notice" for c in checks)
-        if not notice_failed:
-            return None
-        duration = (request.end_date - request.start_date).days
-        new_start = request.as_of_today() + timedelta(days=14)
-        new_end = new_start + timedelta(days=duration)
-        return DateRange(start_date=new_start, end_date=new_end)
+        if notice_failed:
+            duration = (request.end_date - request.start_date).days
+            new_start = request.as_of_today() + timedelta(days=14)
+            new_end = new_start + timedelta(days=duration)
+            return DateRange(start_date=new_start, end_date=new_end)
+
+        balance_failed = any(not c.passed and c.rule_id == "tk.115.balance" for c in checks)
+        if balance_failed:
+            # Сдвигать даты бессмысленно — не хватает не времени, а дней.
+            # Предлагаем тот же старт, но урезанный период на весь доступный
+            # остаток (без праздников — holidays_in_range пересчитает точнее,
+            # но для укороченного периода это достаточно честная оценка).
+            available_days = int(calc.balance_after + calc.chargeable_days)
+            if available_days < 14:
+                return None  # короче 14 дней предложить нечего (ст. 125 ТК РФ)
+            new_end = request.start_date + timedelta(days=available_days - 1)
+            return DateRange(start_date=request.start_date, end_date=new_end)
+
+        return None
 
 
 __all__ = [

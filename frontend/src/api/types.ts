@@ -48,6 +48,61 @@ export interface Employee {
   position: string;
   locationId: string;
   locationName?: string;
+  roles?: Role[];
+  category?: string | null;
+  skills?: string[];
+}
+
+export interface CreateEmployeeRequest {
+  fullName: string;
+  position: string;
+  role?: Role;
+  locationId?: string;
+}
+
+export interface CreatedEmployee {
+  id: string;
+  fullName: string;
+  position: string;
+  roles: Role[];
+  inviteCode: string;
+}
+
+export interface UpdateEmployeeRequest {
+  fullName?: string;
+  position?: string;
+  roles?: Role[];
+  category?: string | null;
+  skills?: string[];
+}
+
+export interface LinkEmployeeRequest {
+  inviteCode: string;
+  maxUserId: string;
+}
+
+export interface CreateCompanyRequest {
+  name: string;
+  locationName: string;
+  adminFullName: string;
+  maxUserId: string;
+}
+
+export interface CreateLocationRequest {
+  name: string;
+}
+
+export interface LocationSummary {
+  id: string;
+  name: string;
+}
+
+export interface CompanySummary {
+  locations: number;
+  managersInvited: number;
+  employeesConnected: number;
+  employeesInvited: number;
+  locationName?: string | null;
 }
 
 export interface Me {
@@ -144,6 +199,15 @@ export interface DocumentDetail extends DocumentSummary {
   history: HistoryEvent[];
 }
 
+/** GAP-03: реестр документов компании — та же карточка + владелец. */
+export interface DocumentRegistryEntry extends DocumentSummary {
+  ownerName: string;
+}
+
+export interface SignDocumentRequest {
+  method: ApprovalMethod;
+}
+
 export interface PreviewRequest {
   startDate: string;
   endDate: string;
@@ -200,6 +264,7 @@ export interface Shift {
   roleRequired: string;
   skillsRequired?: string[];
   status: ShiftStatus;
+  sourceRequestId?: string | null;
 }
 
 export interface ShiftCandidate {
@@ -248,6 +313,29 @@ export interface AuditEntry {
   method: 'biometric' | 'confirm' | null;
   hash: string;
   prevHash: string | null;
+}
+
+export type ScheduleT7EntryStatus = 'proposed' | 'approved';
+
+export interface SubmitScheduleT7Entry {
+  year: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface ScheduleT7Entry {
+  id: string;
+  employeeId: string;
+  fullName: string;
+  year: number;
+  startDate: string;
+  endDate: string;
+  status: ScheduleT7EntryStatus;
+  conflictsWith: string[];
+}
+
+export interface ApproveScheduleT7Request {
+  year: number;
 }
 
 export type ErrorCode =
