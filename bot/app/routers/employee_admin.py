@@ -28,7 +28,10 @@ USAGE_TEXT = (
 async def on_add_employee(event: MessageCreated) -> None:
     """Руководитель создаёт запись сотрудника и получает персональную ссылку
     (README/контракт §2 сценарий 1: «который даёт руководитель»). Разбор по
-    ';' — не по пробелу, т.к. ФИО и должность сами содержат пробелы."""
+    ';' — не по пробелу, т.к. ФИО и должность сами содержат пробелы.
+
+    commands_info: Добавить сотрудника и получить ссылку-приглашение
+    """
     chat_id = event.message.recipient.chat_id
     user = event.message.sender
     if chat_id is None or user is None:

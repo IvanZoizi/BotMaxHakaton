@@ -7,6 +7,7 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from maxapi.enums.update import UpdateType
+from maxapi.types.command import BotCommand
 from maxapi.webhook.fastapi import FastAPIMaxWebhook
 
 from .api_client import close_session
@@ -28,10 +29,32 @@ dp.include_routers(
 )
 
 
+async def _register_commands() -> None:
+    """Нативное меню команд MAX (PATCH /me/commands, bot.set_commands) —
+    maxapi сам собирает список из строк `commands_info: ...` в докстринге
+    каждого хендлера (см. utils/commands.py extract_commands, вызывается
+    диспетчером ещё до on_started). Раньше этот список нигде не вызывался —
+    команды существовали только в коде, но не были видны пользователю ни в
+    меню MAX, ни текстом."""
+    commands = [
+        BotCommand(name=name, description=entry.info)
+        for entry in bot.handlers_commands
+        for name in entry.commands
+    ]
+    if not commands:
+        return
+    try:
+        await bot.set_commands(*commands)
+        logger.info("Команды бота зарегистрированы в MAX: %s", [c.name for c in commands])
+    except Exception:
+        logger.exception("Не удалось зарегистрировать команды бота в MAX")
+
+
 @dp.on_started()
 async def on_dispatcher_started() -> None:
     """Подписка на webhook при старте — аналог bot.subscribe_webhook() из
     примера 09_webhook_bot.py в maxapi, адаптированный под наш конфиг."""
+    await _register_commands()
     if not settings.webhook_url:
         logger.warning(
             "WEBHOOK_URL не задан — подписка на webhook пропущена "

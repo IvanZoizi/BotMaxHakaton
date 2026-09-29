@@ -24,7 +24,10 @@ def _parse_year(text: str | None) -> int | None:
 @schedule_t7_router.message_created(Command("collect_schedule"))
 async def on_collect_schedule(event: MessageCreated) -> None:
     """№24: руководитель запускает сбор графика Т-7 на год — каждому
-    сотруднику его точки уходит приглашение открыть мини-апп и указать даты."""
+    сотруднику его точки уходит приглашение открыть мини-апп и указать даты.
+
+    commands_info: Собрать график отпусков на год (для руководителя)
+    """
     user = event.message.sender
     if user is None:
         return
@@ -68,6 +71,7 @@ async def on_collect_schedule(event: MessageCreated) -> None:
 
 @schedule_t7_router.message_created(Command("approve_schedule"))
 async def on_approve_schedule(event: MessageCreated) -> None:
+    """commands_info: Утвердить график отпусков (для руководителя)"""
     user = event.message.sender
     if user is None:
         return

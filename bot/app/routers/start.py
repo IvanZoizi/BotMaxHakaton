@@ -17,7 +17,11 @@ start_router = Router(router_id="start")
 
 WELCOME_TEXT = (
     "👋 Привет! Я EVA — бизнес-консультант по отпускам и подменам в MAX.\n"
-    "Открою приложение — там оформите отпуск и увидите свои заявки."
+    "Открою приложение — там оформите отпуск и увидите свои заявки.\n\n"
+    "Команды для руководителя:\n"
+    "/add_employee — добавить сотрудника и получить ссылку-приглашение\n"
+    "/collect_schedule <год> — собрать график отпусков на год\n"
+    "/approve_schedule <год> — утвердить график отпусков"
 )
 
 NOT_LINKED_TEXT = "Вы пока не подключены как сотрудник — попросите ссылку у руководителя."
@@ -99,7 +103,10 @@ async def on_started_plain(event: BotStarted) -> None:
 @start_router.message_created(CommandStart())
 async def on_start_command(event: MessageCreated, args: list[str]) -> None:
     """/start <payload> — тот же deep link, но когда пользователь уже
-    писал боту раньше (BotStarted для него больше не сработает)."""
+    писал боту раньше (BotStarted для него больше не сработает).
+
+    commands_info: Открыть EVA и мини-апп
+    """
     chat_id = event.message.recipient.chat_id
     user = event.message.sender
     if chat_id is None or user is None:
